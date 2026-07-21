@@ -51,8 +51,6 @@ export interface IProject {
 	tech: string[]
 	preview: TPreview
 	spotlight?: boolean
-	defaultOpen?: boolean
-	showIndicatorOnScroll?: boolean
 	git?: IGitMetrics
 	platforms?: TPlatform[]
 }

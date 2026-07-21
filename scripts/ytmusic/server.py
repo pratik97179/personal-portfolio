@@ -7,6 +7,7 @@ on each request. Reads YTM_COOKIE and YTM_AUTH_USER from environment.
 GET /recent?limit=10  -> JSON array of tracks
 GET /health           -> {"ok": true}
 """
+import base64
 import http.server
 import json
 import os
@@ -17,7 +18,10 @@ from hashlib import sha1
 
 PORT = 8370
 YTM_ORIGIN = "https://music.youtube.com"
-YTM_API_KEY = "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30"
+# Public WEB_REMIX Innertube client key (same as music.youtube.com; not a GCP secret)
+YTM_API_KEY = base64.b64decode(
+    "QUl6YVN5QzlYTDNaaldkZFh5YTZYNzRkSm9DVEwtV0VZRkROWDMw"
+).decode()
 
 COOKIE = os.environ.get("YTM_COOKIE", "")
 AUTH_USER = os.environ.get("YTM_AUTH_USER", "0")

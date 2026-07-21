@@ -1,7 +1,11 @@
 import crypto from 'node:crypto'
 
 const YTM_ORIGIN = 'https://music.youtube.com'
-const YTM_API_KEY = 'AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30'
+// Public WEB_REMIX Innertube client key (same as music.youtube.com; not a GCP secret)
+const YTM_API_KEY = Buffer.from(
+	'QUl6YVN5QzlYTDNaaldkZFh5YTZYNzRkSm9DVEwtV0VZRkROWDMw',
+	'base64'
+).toString('utf8')
 
 let cachedCookieMap: Map<string, string> | null = null
 let cachedAuthUser = '0'

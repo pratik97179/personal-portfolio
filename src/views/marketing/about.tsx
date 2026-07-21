@@ -150,7 +150,7 @@ export function AboutView() {
 									GGSIPU
 								</p>
 								<p className="text-xs text-muted-foreground/50 mt-0.5">
-									2017 — 2021
+									2017 - 2021
 								</p>
 							</div>
 						</div>

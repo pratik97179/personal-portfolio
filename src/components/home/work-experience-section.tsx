@@ -7,7 +7,7 @@ const WORK_EXPERIENCE: ExperienceItemType[] = [
         id: "first-demat",
         companyName: "First Demat",
         companyDescription:
-            "India's platform for opening a free Demat account and starting an investment journey with confidence. Built by fintech technologists and market professionals for everyone — from first-time investors to seasoned traders.",
+            "India's platform for opening a free Demat account and starting an investment journey with confidence. Built by fintech technologists and market professionals for everyone, from first-time investors to seasoned traders.",
         companyMeta:
             "Financial Services · Ranchi, Jharkhand · Founded 2024 · firstdemat.com",
         positions: [
@@ -39,7 +39,7 @@ const WORK_EXPERIENCE: ExperienceItemType[] = [
         id: "5paisa",
         companyName: "5paisa Capital Ltd.",
         companyDescription:
-            "Tech-first discount broker built by traders, for traders. Since 2016: Equity, F&O, ETFs, Mutual Funds, IPOs, Smallcase, Stock SIP, and Commodities — with fast execution, real-time analytics, and advanced charting.",
+            "Tech-first discount broker built by traders, for traders. Since 2016: Equity, F&O, ETFs, Mutual Funds, IPOs, Smallcase, Stock SIP, and Commodities, with fast execution, real-time analytics, and advanced charting.",
         companyMeta:
             "Financial Services · Mumbai, Maharashtra · Founded 2016 · 47L+ investors · 5paisa.com",
         positions: [
@@ -62,7 +62,7 @@ const WORK_EXPERIENCE: ExperienceItemType[] = [
         id: "antino-labs",
         companyName: "Antino Labs",
         companyDescription:
-            "AI consulting and digital transformation company building user-centric products for global enterprises — from AI agents and custom LLM integrations to design, automation, and end-to-end product development.",
+            "AI consulting and digital transformation company building user-centric products for global enterprises, from AI agents and custom LLM integrations to design, automation, and end-to-end product development.",
         companyMeta:
             "IT Services · Gurgaon, Haryana · Founded 2018 · 600+ engineers · antino.com",
         positions: [
@@ -85,7 +85,7 @@ const WORK_EXPERIENCE: ExperienceItemType[] = [
         id: "tech-alchemy",
         companyName: "Tech Alchemy",
         companyDescription:
-            "London-based product team combining product thinking with deep technical expertise across AI and blockchain. Helps ambitious teams launch, scale, and evolve software — from early MVPs to established platforms.",
+            "London-based product team combining product thinking with deep technical expertise across AI and blockchain. Helps ambitious teams launch, scale, and evolve software, from early MVPs to established platforms.",
         companyMeta:
             "Software Development · London · Founded 2016 · 200+ people · techalchemy.com",
         positions: [
@@ -115,7 +115,7 @@ const WORK_EXPERIENCE: ExperienceItemType[] = [
         id: "naai",
         companyName: "Naai",
         companyDescription:
-            "Salon booking and discovery product — geo-based salon search, payments, and booking flows for customers and salon partners.",
+            "Salon booking and discovery product with geo-based salon search, payments, and booking flows for customers and salon partners.",
         companyMeta: "Consumer · India · Freelance",
         positions: [
             {
@@ -148,13 +148,13 @@ const WORK_EXPERIENCE: ExperienceItemType[] = [
         positions: [
             {
                 id: "education-btech-it",
-                title: "B.Tech — Information Technology",
+                title: "B.Tech in Information Technology",
                 employmentPeriod: "2017 — 2021",
                 employmentType: "Graduated",
                 location: "Delhi, India",
                 icon: "education",
                 description:
-                    "Bachelor of Technology in Information Technology — foundations in software engineering, systems, and building production-ready applications.",
+                    "Bachelor of Technology in Information Technology. Foundations in software engineering, systems, and building production-ready applications.",
                 skills: [
                     "Information Technology",
                     "Software Engineering",
