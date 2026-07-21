@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/lib/cn";
 import { formatShortDate } from "@/shared/lib/date";
-import { ExternalLink, Eye, Github } from "lucide-react";
+import { ExternalLink, Github } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { lazy, memo, Suspense, useState } from "react";
 import type { IProject } from "../types";
@@ -43,11 +43,6 @@ export const ProjectRow = memo(function ProjectRow({
         project.preview?.type && project.preview.type !== "none";
     const primaryTech = project.tech[0];
     const techSummary = project.tech.join(", ");
-    const hasDetails =
-        !!project.additionalDescription ||
-        !!project.git ||
-        hasMediaPreview ||
-        project.tech.length > 0;
 
     return (
         <div
@@ -137,41 +132,6 @@ export const ProjectRow = memo(function ProjectRow({
                         </div>
                     )}
                     <div className="flex items-center">
-                        {hasDetails && !isDesktop && (
-                            <button
-                                type="button"
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    onToggle();
-                                }}
-                                className={cn(
-                                    "min-h-9 min-w-9 inline-flex items-center justify-center p-2 transition-colors duration-300",
-                                    isOpen
-                                        ? "text-foreground"
-                                        : "text-muted-foreground hover:text-foreground",
-                                )}
-                                style={{
-                                    transitionTimingFunction:
-                                        "cubic-bezier(0.16, 1, 0.3, 1)",
-                                }}
-                                aria-label={`Toggle ${project.name} details`}
-                            >
-                                <Eye className="h-3 w-3" />
-                            </button>
-                        )}
-                        {hasDetails && isDesktop && (
-                            <span
-                                className={cn(
-                                    "min-h-9 min-w-9 inline-flex items-center justify-center p-2 transition-colors duration-300",
-                                    isOpen
-                                        ? "text-foreground"
-                                        : "text-muted-foreground",
-                                )}
-                                aria-hidden
-                            >
-                                <Eye className="h-3 w-3" />
-                            </span>
-                        )}
                         {project.github && (
                             <a
                                 href={project.github}
