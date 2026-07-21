@@ -1,0 +1,219 @@
+'use client'
+
+import { useState, useEffect, useRef, useCallback } from 'react'
+import {
+	getCurrentPlayback,
+	SpotifyTrack,
+	formatDuration
+} from '@/features/spotify/client'
+
+export interface SpotifyPlaybackState {
+	track: SpotifyTrack | null
+	progress: number
+	duration: number
+	isPlaying: boolean
+	percentage: number
+	formattedProgress: string
+	formattedDuration: string
+}
+
+const ACTIVE_POLL_INTERVAL = 10000
+const IDLE_POLL_INTERVAL = 60000
+const ERROR_POLL_INTERVAL = 180000
+
+const getPollingInterval = () => {
+	if (typeof navigator === 'undefined') return ACTIVE_POLL_INTERVAL
+
+	const connection = (navigator as any).connection
+	if (!connection) return ACTIVE_POLL_INTERVAL
+
+	if (connection.saveData) return 30000
+	if (
+		connection.effectiveType === 'slow-2g' ||
+		connection.effectiveType === '2g'
+	)
+		return 20000
+	return ACTIVE_POLL_INTERVAL
+}
+
+const TIMER_INTERVAL = 200
+const DRIFT_THRESHOLD = 2000
+
+export function useSpotifyPlayback(): SpotifyPlaybackState {
+	const [state, setState] = useState<SpotifyPlaybackState>({
+		track: null,
+		progress: 0,
+		duration: 0,
+		isPlaying: false,
+		percentage: 0,
+		formattedProgress: '0:00',
+		formattedDuration: '0:00'
+	})
+
+	const T0Ref = useRef<number>(0)
+	const lastTrackIdRef = useRef<string | null>(null)
+	const lastProgressRef = useRef<number>(0)
+	const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+	const timerIntervalRef = useRef<NodeJS.Timeout | null>(null)
+	const isVisibleRef = useRef<boolean>(true)
+	const nextPollDelayRef = useRef<number>(getPollingInterval())
+
+	const calculateProgress = useCallback(
+		(isPlaying: boolean, duration: number): number => {
+			if (!isPlaying) {
+				return lastProgressRef.current
+			}
+			const elapsed = Date.now() - T0Ref.current
+			return Math.min(elapsed, duration)
+		},
+		[]
+	)
+
+	const updateLocalProgress = useCallback(() => {
+		setState(prev => {
+			if (!prev.track || !prev.isPlaying) return prev
+
+			const currentProgress = calculateProgress(
+				prev.isPlaying,
+				prev.duration
+			)
+			const percentage =
+				prev.duration > 0 ? (currentProgress / prev.duration) * 100 : 0
+
+			return {
+				...prev,
+				progress: currentProgress,
+				percentage: Math.min(percentage, 100),
+				formattedProgress: formatDuration(currentProgress)
+			}
+		})
+	}, [calculateProgress])
+
+	const scheduleNextPoll = useCallback((delay: number) => {
+		if (pollTimeoutRef.current) {
+			clearTimeout(pollTimeoutRef.current)
+		}
+
+		pollTimeoutRef.current = setTimeout(() => {
+			void fetchPlaybackState()
+		}, delay)
+	}, [])
+
+	const fetchPlaybackState = useCallback(async () => {
+		if (!isVisibleRef.current) return
+
+		try {
+			const playback = await getCurrentPlayback()
+
+			if (!playback || !playback.track) {
+				setState({
+					track: null,
+					progress: 0,
+					duration: 0,
+					isPlaying: false,
+					percentage: 0,
+					formattedProgress: '0:00',
+					formattedDuration: '0:00'
+				})
+				lastTrackIdRef.current = null
+				nextPollDelayRef.current = IDLE_POLL_INTERVAL
+				return
+			}
+
+			const { track, progress_ms, duration_ms, is_playing } = playback
+			const trackChanged = lastTrackIdRef.current !== track.id
+
+			const newT0 = Date.now() - progress_ms
+
+			const localProgress = calculateProgress(is_playing, duration_ms)
+			const drift = Math.abs(localProgress - progress_ms)
+			const shouldHardReset = drift > DRIFT_THRESHOLD || trackChanged
+
+			if (shouldHardReset) {
+				T0Ref.current = newT0
+				lastProgressRef.current = progress_ms
+			} else {
+				T0Ref.current = newT0
+			}
+
+			lastTrackIdRef.current = track.id
+			lastProgressRef.current = progress_ms
+
+			const percentage =
+				duration_ms > 0 ? (progress_ms / duration_ms) * 100 : 0
+
+			setState({
+				track,
+				progress: progress_ms,
+				duration: duration_ms,
+				isPlaying: is_playing,
+				percentage: Math.min(percentage, 100),
+				formattedProgress: formatDuration(progress_ms),
+				formattedDuration: formatDuration(duration_ms)
+			})
+
+			nextPollDelayRef.current = is_playing
+				? getPollingInterval()
+				: IDLE_POLL_INTERVAL
+		} catch {
+			nextPollDelayRef.current = ERROR_POLL_INTERVAL
+		} finally {
+			if (isVisibleRef.current) {
+				scheduleNextPoll(nextPollDelayRef.current)
+			}
+		}
+	}, [calculateProgress, scheduleNextPoll])
+
+	const startPolling = useCallback(() => {
+		if (pollTimeoutRef.current) return
+
+		nextPollDelayRef.current = getPollingInterval()
+		void fetchPlaybackState()
+		timerIntervalRef.current = setInterval(
+			updateLocalProgress,
+			TIMER_INTERVAL
+		)
+	}, [fetchPlaybackState, updateLocalProgress])
+
+	const stopPolling = useCallback(() => {
+		if (pollTimeoutRef.current) {
+			clearTimeout(pollTimeoutRef.current)
+			pollTimeoutRef.current = null
+		}
+		if (timerIntervalRef.current) {
+			clearInterval(timerIntervalRef.current)
+			timerIntervalRef.current = null
+		}
+	}, [])
+
+	useEffect(() => {
+		const handleVisibilityChange = () => {
+			isVisibleRef.current = document.visibilityState === 'visible'
+
+			if (isVisibleRef.current) {
+				startPolling()
+			} else {
+				stopPolling()
+			}
+		}
+
+		const startupDelay = setTimeout(() => {
+			if (document.visibilityState === 'visible') {
+				startPolling()
+			}
+		}, 3000)
+
+		document.addEventListener('visibilitychange', handleVisibilityChange)
+
+		return () => {
+			clearTimeout(startupDelay)
+			stopPolling()
+			document.removeEventListener(
+				'visibilitychange',
+				handleVisibilityChange
+			)
+		}
+	}, [startPolling, stopPolling])
+
+	return state
+}

@@ -1,0 +1,191 @@
+'use client'
+
+import type { Route } from 'next'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { AnimatedNumber } from '../ui/effects/animated-number'
+import { getDateParts, readMinutes } from '@/features/blog/lib/format'
+import { slugifyTopic } from '@/features/blog/lib/topic-slug'
+
+type BlogPost = {
+	metadata: {
+		title: string
+		publishedAt: string
+		summary: string
+		tags?: string[]
+	}
+	slug: string
+}
+
+type Props = {
+	publishedAt: string
+	topic?: string
+	tags?: string[]
+	title: string
+	summary: string
+	readTime: string
+	slug: string
+}
+
+export function BlogPostClient({
+	publishedAt,
+	topic,
+	tags,
+	title,
+	summary: _summary,
+	readTime,
+	slug: _slug
+}: Props) {
+	const router = useRouter()
+
+	const dateParts = getDateParts(publishedAt)
+	const readTimeMinutes = readMinutes(readTime)
+	const dateDuration = 500
+
+	const allTags = tags || []
+
+	return (
+		<header>
+			<div className="mb-3">
+				<button
+					onClick={() => router.back()}
+					className="inline-flex items-center gap-2 py-1 text-xs font-mono text-muted-foreground/50 hover:text-foreground transition-colors group"
+				>
+					<ArrowLeft className="w-3 h-3 transition-transform group-hover:-translate-x-0.5" />
+					back
+				</button>
+			</div>
+
+			<h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-snug mb-3 text-balance">
+				{title}
+			</h1>
+
+			<div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+				<time className="flex items-center gap-1 tabular-nums">
+					<AnimatedNumber
+						value={dateParts.day}
+						duration={dateDuration}
+						initialProgress={0}
+					/>
+					<span>{dateParts.month}</span>
+					<AnimatedNumber
+						value={dateParts.year}
+						duration={dateDuration}
+						initialProgress={0}
+					/>
+				</time>
+
+				<span className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+
+				<span className="flex items-center gap-1">
+					<AnimatedNumber
+						value={readTimeMinutes}
+						duration={dateDuration}
+						initialProgress={0}
+					/>
+					<span>min read</span>
+				</span>
+			</div>
+
+			{(topic || allTags.length > 0) && (
+				<div className="flex flex-wrap gap-2">
+					{topic && (
+						<Link
+							href={`/blog/topics/${slugifyTopic(topic)}`}
+							className="inline-flex items-center px-3 py-1.5 text-xs font-medium
+                bg-neutral-50 dark:bg-neutral-900/60
+                text-neutral-600 dark:text-neutral-400
+                border border-neutral-200 dark:border-neutral-800
+                hover:bg-neutral-100 dark:hover:bg-neutral-800/60
+                hover:border-neutral-300 dark:hover:border-neutral-700
+                hover:text-neutral-900 dark:hover:text-neutral-200
+                rounded-md transition-all duration-200"
+						>
+							{topic}
+						</Link>
+					)}
+					{allTags.map(tag => (
+						<span
+							key={tag}
+							className="inline-flex items-center px-3 py-1.5 text-xs font-medium
+                bg-neutral-50 dark:bg-neutral-900/60
+                text-neutral-600 dark:text-neutral-400
+                border border-neutral-200 dark:border-neutral-800
+                hover:bg-neutral-100 dark:hover:bg-neutral-800/60
+                hover:border-neutral-300 dark:hover:border-neutral-700
+                hover:text-neutral-900 dark:hover:text-neutral-200
+                rounded-md transition-all duration-200"
+						>
+							{tag}
+						</span>
+					))}
+				</div>
+			)}
+		</header>
+	)
+}
+
+interface PostNavigationProps {
+	prevPost: BlogPost | null
+	nextPost: BlogPost | null
+	basePath?: string
+}
+
+export function PostNavigation({
+	prevPost,
+	nextPost,
+	basePath = '/blog'
+}: PostNavigationProps) {
+	if (!prevPost && !nextPost) return null
+
+	return (
+		<nav className="mt-16 pt-8 border-t border-neutral-200 dark:border-neutral-800">
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+				{prevPost ? (
+					<Link
+						href={`${basePath}/${prevPost.slug}` as Route}
+						className="group flex flex-col p-4 rounded-xl 
+              bg-neutral-50 dark:bg-neutral-900/50 
+              border border-neutral-200 dark:border-neutral-800
+              hover:border-neutral-300 dark:hover:border-neutral-700
+              hover:bg-neutral-100 dark:hover:bg-neutral-800/50
+              transition-all duration-200"
+					>
+						<span className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+							<ArrowLeft className="w-3 h-3 transition-transform group-hover:-translate-x-0.5" />
+							Previous
+						</span>
+						<span className="font-medium text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+							{prevPost.metadata.title}
+						</span>
+					</Link>
+				) : (
+					<div />
+				)}
+
+				{nextPost ? (
+					<Link
+						href={`${basePath}/${nextPost.slug}` as Route}
+						className="group flex flex-col p-4 rounded-xl text-right
+              bg-neutral-50 dark:bg-neutral-900/50 
+              border border-neutral-200 dark:border-neutral-800
+              hover:border-neutral-300 dark:hover:border-neutral-700
+              hover:bg-neutral-100 dark:hover:bg-neutral-800/50
+              transition-all duration-200"
+					>
+						<span className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground mb-2">
+							Next
+							<ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+						</span>
+						<span className="font-medium text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+							{nextPost.metadata.title}
+						</span>
+					</Link>
+				) : (
+					<div />
+				)}
+			</div>
+		</nav>
+	)
+}

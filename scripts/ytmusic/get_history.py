@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Fetch YT Music listening history.
+
+Priority: OAuth JSON > browser headers JSON > cookie env var.
+"""
+import json
+import os
+import sys
+from ytmusicapi import YTMusic, OAuthCredentials
+
+CLIENT_ID = os.environ.get("YTM_CLIENT_ID")
+CLIENT_SECRET = os.environ.get("YTM_CLIENT_SECRET")
+
+
+def get_yt() -> YTMusic:
+    if os.path.isfile("oauth.json"):
+        if not CLIENT_ID or not CLIENT_SECRET:
+            raise RuntimeError(
+                "YTM_CLIENT_ID and YTM_CLIENT_SECRET are required with oauth.json."
+            )
+        return YTMusic(
+            "oauth.json",
+            oauth_credentials=OAuthCredentials(CLIENT_ID, CLIENT_SECRET),
+        )
+
+    if os.path.isfile("headers.json"):
+        return YTMusic("headers.json")
+
+    cookie = os.environ.get("YTM_COOKIE")
+    auth_user = os.environ.get("YTM_AUTH_USER", "0")
+    if cookie:
+        from ytmusicapi.helpers import get_authorization, sapisid_from_cookie
+        import time, hashlib
+
+        sapisid = sapisid_from_cookie(cookie)
+        auth = get_authorization(sapisid + " " + "https://music.youtube.com")
+
+        headers = {
+            "Cookie": cookie,
+            "X-Goog-AuthUser": auth_user,
+            "Authorization": auth,
+            "Origin": "https://music.youtube.com",
+            "X-Origin": "https://music.youtube.com",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        }
+        return YTMusic(json.dumps(headers))
+
+    raise RuntimeError("No credentials found. Provide oauth.json, headers.json, or YTM_COOKIE env var.")
+
+
+limit = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+try:
+    yt = get_yt()
+    history = yt.get_history()
+    print(json.dumps(history[:limit]))
+except Exception as e:
+    print(json.dumps({"error": str(e)}), file=sys.stderr)
+    sys.exit(1)

@@ -1,0 +1,42 @@
+import { pgTable, text, boolean, integer, index } from 'drizzle-orm/pg-core'
+import { primaryId, timestamps, updatedTimestamp } from './helpers'
+
+export const projects = pgTable(
+	'projects',
+	{
+		...primaryId,
+		idx: integer('idx').notNull().unique(),
+		title: text('title').notNull(),
+		desc: text('desc').notNull(),
+		featured: boolean('featured').default(false).notNull(),
+		additionalDesc: text('additional_desc'),
+		showUpd: boolean('show_upd').default(true).notNull(),
+		demoBox: text('demo_box'),
+		showLive: boolean('show_live').default(false).notNull(),
+		gitUrl: text('git_url'),
+		demoUrl: text('demo_url'),
+		native: boolean('native').default(false).notNull(),
+		labels: text('labels').array().default([]).notNull(),
+		showCommits: boolean('show_commits').default(false).notNull(),
+		showFirst: boolean('show_first').default(false).notNull(),
+		showLatest: boolean('show_latest').default(true).notNull(),
+		hidden: boolean('hidden').default(false).notNull(),
+		defaultOpen: boolean('default_open').default(false).notNull(),
+		showIndicator: boolean('show_indicator').default(false).notNull(),
+		...timestamps
+	},
+	t => [
+		index('projects_idx_idx').on(t.idx),
+		index('projects_hidden_idx').on(t.hidden)
+	]
+)
+
+export const projectSettings = pgTable('project_settings', {
+	id: text('id').primaryKey().default('singleton'),
+	showN: integer('show_n').default(6).notNull(),
+	...updatedTimestamp
+})
+
+export type Project = typeof projects.$inferSelect
+export type NewProject = typeof projects.$inferInsert
+export type ProjectSettings = typeof projectSettings.$inferSelect
