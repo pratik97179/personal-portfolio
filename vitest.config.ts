@@ -10,8 +10,7 @@ export default defineConfig({
         setupFiles: ["./src/test/setup.ts"],
         env: {
             DATABASE_URL: "postgresql://localhost/test",
-            BETTER_AUTH_URL: "http://localhost:3000",
-            BETTER_AUTH_SECRET: "test-secret",
+            NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
         },
         include: ["__tests__/**/*.test.ts", "__tests__/**/*.test.tsx"],
         coverage: {

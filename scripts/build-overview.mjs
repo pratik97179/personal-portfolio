@@ -20,15 +20,14 @@ const ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "gu");
 const PACKAGE_RUNNER = { command: "npm", args: ["run"] };
 const BUILD_ENV = {
     DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci",
-    BETTER_AUTH_URL: "http://localhost:3000",
-    BETTER_AUTH_SECRET: "ci-build-secret-ci-build-secret-ci-build-secret",
+    NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
 };
 
 const steps = [
     { label: "Lint", script: "lint" },
     { label: "Typecheck", script: "typecheck" },
     { label: "Tests", script: "test" },
-    { label: "Build", script: "build:next" },
+    { label: "Build", script: "build" },
 ];
 
 const results = [];

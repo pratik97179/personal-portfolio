@@ -1,6 +1,10 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
+const isProductionBuild =
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.npm_lifecycle_event === "build";
+
 export const env = createEnv({
     clientPrefix: "NEXT_PUBLIC_",
     server: {
@@ -20,4 +24,8 @@ export const env = createEnv({
 
         IP_INFO_TOKEN: process.env.IP_INFO_TOKEN,
     },
+    emptyStringAsUndefined: true,
+    // Only skip during `next build` page collection — never at request runtime.
+    skipValidation:
+        isProductionBuild || process.env.SKIP_ENV_VALIDATION === "1",
 });

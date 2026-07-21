@@ -5,7 +5,7 @@ const blogMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/features/blog', () => blogMocks)
-vi.mock('@/app/sitemap', () => ({
+vi.mock('@/core/config/site', () => ({
 	baseUrl: 'https://example.com'
 }))
 

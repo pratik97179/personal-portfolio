@@ -20,8 +20,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "check": "bun run lint && bun run typecheck && bun run test",
-    "build": "node scripts/build-overview.mjs",
-    "build:next": "next build",
+    "build": "next build",
+    "build:verify": "node scripts/build-overview.mjs",
     "ogbuild": "next build",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
@@ -45,6 +45,7 @@
   "dependencies": {
     "@microflash/remark-callout-directives": "^5.0.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@t3-oss/env-core": "^0.13.11",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
@@ -60,6 +61,7 @@
     "next": "^16.3.0-canary.83",
     "next-mdx-remote": "^6.0.0",
     "postcss": "^8.4.35",
+    "postgres": "^3.4.9",
     "react": "19",
     "react-dom": "19",
     "react-icons": "^5.5.0",
@@ -89,7 +91,6 @@
     "jsdom": "^29.0.1",
     "oxfmt": "^0.33.0",
     "oxlint": "^1.43.0",
-    "postgres": "^3.4.9",
     "vitest": "^4.1.2"
   }
 }
