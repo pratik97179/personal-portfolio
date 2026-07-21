@@ -46,8 +46,6 @@ function mapDbProjectToIProject(dbProject: Project): IProject {
         tech: dbProject.labels,
         preview,
         spotlight: dbProject.featured,
-        defaultOpen: dbProject.defaultOpen,
-        showIndicatorOnScroll: dbProject.showIndicator,
     };
 }
 
