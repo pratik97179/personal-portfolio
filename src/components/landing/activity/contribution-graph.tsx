@@ -10,6 +10,7 @@ import {
 } from '@/hooks/use-combined-activity'
 import type { GitHubEventDetail } from '@/hooks/use-github'
 import { useCurrentYear } from '@/hooks/use-current-year'
+import { toActivityDateKey } from '@/shared/lib/date'
 
 interface ActivityDay {
 	date: string
@@ -178,9 +179,8 @@ export function ActivityContributionGraph({
 		if (!combinedData?.recentActivity) return []
 		const byDate = new Map<string, GitHubEventDetail[]>()
 		for (const event of combinedData.recentActivity) {
-			const dateStr = new Date(event.timestamp)
-				.toISOString()
-				.split('T')[0]
+			const dateStr = toActivityDateKey(event.timestamp)
+			if (!dateStr) continue
 			const existing = byDate.get(dateStr) || []
 			existing.push(event)
 			byDate.set(dateStr, existing)
@@ -215,7 +215,7 @@ export function ActivityContributionGraph({
 		for (let i = 0; i <= days; i++) {
 			const date = new Date(start)
 			date.setDate(date.getDate() + i)
-			const dateStr = date.toISOString().split('T')[0]
+			const dateStr = toActivityDateKey(date)
 			const githubData = githubContributions.get(dateStr)
 			const githubCount = githubData?.contributionCount || 0
 
@@ -251,9 +251,7 @@ export function ActivityContributionGraph({
 		}
 
 		tracks.forEach(track => {
-			const dateStr = new Date(track.played_at)
-				.toISOString()
-				.split('T')[0]
+			const dateStr = toActivityDateKey(track.played_at)
 			const day = activityMap.get(dateStr)
 			if (day) {
 				day.spotifyCount++
@@ -324,34 +322,56 @@ export function ActivityContributionGraph({
 	]
 
 	const totalWeeks = useMemo(() => {
-		const now = new Date()
-		const diffMs = now.getTime() - startDate.getTime()
-		const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-		return Math.ceil(diffDays / 7) + 1
+		const gridStart = new Date(startDate)
+		gridStart.setDate(gridStart.getDate() - gridStart.getDay())
+		const today = new Date()
+		const diffDays = Math.floor(
+			(today.getTime() - gridStart.getTime()) / (1000 * 60 * 60 * 24)
+		)
+		return Math.floor(diffDays / 7) + 1
 	}, [startDate])
 
 	const weeks = useMemo(() => {
 		const weeksArray: ActivityDay[][] = []
 		const start = startDate
+		const startKey = toActivityDateKey(startDate)
+		const todayKey = toActivityDateKey(new Date())
 
 		let currentDate = new Date(start)
 		const dayOfWeek = currentDate.getDay()
 		currentDate.setDate(currentDate.getDate() - dayOfWeek)
 
+		const emptyDay = (): ActivityDay => ({
+			date: '',
+			githubCount: 0,
+			spotifyCount: 0,
+			totalActivity: 0,
+			level: 0
+		})
+
 		for (let i = 0; i < totalWeeks; i++) {
 			const week: ActivityDay[] = []
 			for (let j = 0; j < 7; j++) {
-				const dateStr = currentDate.toISOString().split('T')[0]
-				const day = activityData.find(d => d.date === dateStr)
-				week.push(
-					day || {
-						date: dateStr,
-						githubCount: 0,
-						spotifyCount: 0,
-						totalActivity: 0,
-						level: 0
-					}
-				)
+				const dateStr = toActivityDateKey(currentDate)
+				// Match GitHub: no cells before the range start or after today.
+				if (
+					!dateStr ||
+					dateStr < startKey ||
+					dateStr > todayKey
+				) {
+					week.push(emptyDay())
+				} else {
+					const day = activityData.find(d => d.date === dateStr)
+					week.push(
+						day || {
+							date: dateStr,
+							githubCount: 0,
+							spotifyCount: 0,
+							totalActivity: 0,
+							level: 0
+						}
+					)
+				}
 				currentDate.setDate(currentDate.getDate() + 1)
 			}
 			weeksArray.push(week)
@@ -479,17 +499,21 @@ export function ActivityContributionGraph({
 									const delayMs =
 										cellDelays[weekIndex * 7 + dayIndex] ??
 										0
-									const isToday =
-										day.date ===
-										new Date().toISOString().split('T')[0]
 
 									return (
 										<button
 											key={dayIndex}
 											type="button"
-											aria-label={formatDayLabel(day)}
+											disabled={!hasData}
+											tabIndex={hasData ? 0 : -1}
+											aria-hidden={!hasData}
+											aria-label={
+												hasData
+													? formatDayLabel(day)
+													: undefined
+											}
 											aria-haspopup={
-												day.totalActivity > 0
+												hasData && day.totalActivity > 0
 													? 'dialog'
 													: undefined
 											}
@@ -500,11 +524,7 @@ export function ActivityContributionGraph({
 													? getColorForLevel(
 															day.level
 														)
-													: 'bg-secondary/40 border border-border/20'
-											} ${!hasData ? 'opacity-0' : ''} ${
-												isToday
-													? 'ring-2 ring-brand-500 ring-offset-1 ring-offset-background'
-													: ''
+													: 'bg-transparent border-0 opacity-0 pointer-events-none'
 											}`}
 											style={{
 												animationDelay: `${delayMs}ms`
@@ -515,6 +535,7 @@ export function ActivityContributionGraph({
 											}
 											onMouseLeave={handleMouseLeave}
 											onClick={e =>
+												hasData &&
 												handleDayClick(day, e)
 											}
 										/>
@@ -661,19 +682,8 @@ export function ActivityContributionGraph({
 													<p className="text-xs opacity-75">
 														{selectedDay.githubCount >
 														0
-															? 'GitHub only provides detailed events for the last ~90 days.'
+															? 'Contribution count is available, but GitHub did not return push/PR event details for this day (private repos, delayed events, or API limits).'
 															: 'No contributions were recorded on this day.'}
-														{selectedDay.githubCount >
-															0 && (
-															<>
-																<br />
-																Contribution
-																counts are still
-																tracked via the
-																contributions
-																API.
-															</>
-														)}
 													</p>
 												</div>
 											</div>

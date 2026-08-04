@@ -29,7 +29,7 @@ export function ActivitySection() {
 					<ActivityContributionGraph showLegend={true} />
 				</div>
 
-				<ActivityFeed activityCount={5} rotationInterval={6000} />
+				<ActivityFeed activityCount={5} rotationInterval={4500} />
 			</div>
 		</Section>
 	)

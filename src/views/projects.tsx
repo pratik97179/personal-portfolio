@@ -10,7 +10,15 @@ export function ProjectsView({
 	visibleRowCount = STATIC_PROJECTS.length || 3
 }: Props) {
 	return (
-		<Section noPadding contentPadding={false} className="!mb-0">
+		<Section
+			animatedStripes
+			title="After Hours"
+			titleHref="/after-hours"
+			noPadding
+			contentPadding={false}
+			noHeaderMargin
+			className="!mb-0"
+		>
 			<ProjectShowcase visibleRowCount={visibleRowCount} />
 		</Section>
 	)

@@ -432,7 +432,7 @@ interface ActivityFeedProps {
 
 export function ActivityFeed({
 	activityCount = 5,
-	rotationInterval = 6000
+	rotationInterval = 4500
 }: ActivityFeedProps) {
 	const [currentIndex, setCurrentIndex] = useState(0)
 	const [direction, setDirection] = useState(0)

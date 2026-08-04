@@ -18,6 +18,7 @@ export async function HomeBlogPosts() {
 		<Section
 			animatedStripes
 			title="Posts"
+			titleHref="/blog"
 			headerAction={<HomePostCountHeader count={posts.length} />}
 			noHeaderMargin
 		>

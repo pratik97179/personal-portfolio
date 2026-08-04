@@ -1,6 +1,7 @@
 import { getGitHubToken } from './auth'
 import type { GitHubEventDetail } from '@/features/github/types'
 import { githubUsername } from '@/core/config/site'
+import { toActivityDateKey } from '@/shared/lib/date'
 
 interface GitHubContributionDay {
 	date: string
@@ -90,6 +91,58 @@ export function selectDistinctRecentActivity(
 	}
 
 	return distinctEvents
+}
+
+/** Map a GitHub PushEvent into feed activity. Public Events API often omits commits. */
+export function mapPushEventToActivity(event: {
+	id: string
+	created_at: string
+	public?: boolean
+	repo: { name: string }
+	payload?: {
+		size?: number
+		commits?: Array<{ message?: string }>
+		ref?: string
+		head?: string
+	} | null
+}): GitHubEventDetail | null {
+	if (!event.payload) return null
+
+	let commitCount = 0
+	if (typeof event.payload.size === 'number') {
+		commitCount = event.payload.size
+	} else if (Array.isArray(event.payload.commits)) {
+		commitCount = event.payload.commits.length
+	}
+
+	const ref = event.payload.ref?.replace('refs/heads/', '') || ''
+	const head =
+		typeof event.payload.head === 'string' ? event.payload.head : ''
+
+	if (commitCount === 0 && !head && !ref) return null
+
+	const commitMsg =
+		event.payload.commits?.[0]?.message?.split('\n')[0] ||
+		(ref ? `Updates on ${ref}` : 'Pushed commits')
+
+	const title =
+		commitCount > 0
+			? `pushed ${commitCount} commit${commitCount === 1 ? '' : 's'}${ref ? ` to ${ref}` : ''}`
+			: `pushed commits${ref ? ` to ${ref}` : ''}`
+
+	return {
+		id: event.id,
+		timestamp: event.created_at,
+		repository: event.repo.name,
+		isPrivate: event.public === false,
+		type: 'commit',
+		title,
+		description: commitMsg,
+		url: head
+			? `https://github.com/${event.repo.name}/commit/${head}`
+			: `https://github.com/${event.repo.name}`,
+		payload: event.payload
+	}
 }
 
 class GitHubService {
@@ -520,22 +573,19 @@ class GitHubService {
 				allEvents.push(...events)
 
 				const lastEvent = events[events.length - 1]
-				const lastDate = new Date(lastEvent.created_at)
-				if (lastDate < new Date(startDate)) break
+				const lastDateKey = toActivityDateKey(lastEvent.created_at)
+				// Events are newest-first; stop once we've passed the requested window.
+				if (lastDateKey && lastDateKey < startDate) break
 			}
 
 			const activityMap = new Map<string, GitHubEventDetail[]>()
 
-			const start = new Date(startDate)
-			const end = new Date(endDate)
-			start.setHours(0, 0, 0, 0)
-			end.setHours(23, 59, 59, 999)
-
 			for (const event of allEvents) {
-				const eventDate = new Date(event.created_at)
-				if (eventDate < start || eventDate > end) continue
+				const dateStr = toActivityDateKey(event.created_at)
+				if (!dateStr || dateStr < startDate || dateStr > endDate) {
+					continue
+				}
 
-				const dateStr = eventDate.toISOString().split('T')[0]
 				const detail = this.parseGitHubEvent(event)
 
 				if (detail) {
@@ -546,15 +596,19 @@ class GitHubService {
 			}
 
 			const result: GitHubDayActivity[] = []
-			this.forEachDayInRange(start, end, currentDate => {
-				const dateStr = currentDate.toISOString().split('T')[0]
+			const cursor = new Date(`${startDate}T12:00:00.000Z`)
+			const endInclusive = new Date(`${endDate}T12:00:00.000Z`)
+
+			while (cursor <= endInclusive) {
+				const dateStr = cursor.toISOString().slice(0, 10)
 				const dayEvents = activityMap.get(dateStr) || []
 				result.push({
 					date: dateStr,
 					events: dayEvents,
 					totalCount: dayEvents.length
 				})
-			})
+				cursor.setUTCDate(cursor.getUTCDate() + 1)
+			}
 
 			return result
 		} catch (error) {
@@ -575,29 +629,7 @@ class GitHubService {
 
 	switch (event.type) {
 			case 'PushEvent': {
-				if (!event.payload) return null
-				let commitCount = 0
-
-				if (typeof event.payload.size === 'number') {
-					commitCount = event.payload.size
-				} else if (event.payload.commits) {
-					commitCount = event.payload.commits.length
-				}
-
-				if (commitCount === 0) return null
-
-				const commitMsg =
-					event.payload.commits?.[0]?.message?.split('\n')[0] ||
-					'No commit message'
-				const ref = event.payload.ref?.replace('refs/heads/', '') || ''
-				return {
-					...base,
-					type: 'commit',
-					title: `pushed ${commitCount} commit${commitCount === 1 ? '' : 's'}${ref ? ` to ${ref}` : ''}`,
-					description: commitMsg,
-					url: `https://github.com/${event.repo.name}/commits/${event.payload.head}`,
-					payload: event.payload
-				}
+				return mapPushEventToActivity(event)
 			}
 
 			case 'CreateEvent': {

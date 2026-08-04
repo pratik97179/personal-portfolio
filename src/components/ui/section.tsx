@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import type { Route } from 'next'
+import Link from 'next/link'
 
 interface SectionProps {
 	children: ReactNode
 	title?: string
+	titleHref?: Route | string
 	icon?: LucideIcon
 	className?: string
 
@@ -17,6 +20,7 @@ export const SECTION_PADDING = 'px-0'
 
 export function Section({
 	title,
+	titleHref,
 	children,
 	className = '',
 	headerAction,
@@ -25,6 +29,9 @@ export function Section({
 	noHeaderMargin = false,
 	animatedStripes = false
 }: SectionProps) {
+	const titleClassName =
+		'text-sm font-medium text-muted-foreground flex items-center gap-2'
+
 	return (
 		<section className={`relative ${className}`}>
 			{title && (
@@ -32,8 +39,17 @@ export function Section({
 					className={`full-width-header ${noHeaderMargin ? '!mb-0' : ''} ${animatedStripes ? 'animate-pattern-flow' : ''}`.trim()}
 				>
 					<div className="header-content-container flex items-center justify-between header-content-container--with-padding">
-						<h2 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-							{title}
+						<h2 className={titleClassName}>
+							{titleHref ? (
+								<Link
+									href={titleHref as Route}
+									className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+								>
+									{title}
+								</Link>
+							) : (
+								title
+							)}
 						</h2>
 						{headerAction && (
 							<div className="flex items-center gap-2">

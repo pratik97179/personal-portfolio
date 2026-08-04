@@ -50,13 +50,15 @@ export type ExperienceItemType = {
 
 export function WorkExperience({
 	className,
-	experiences
+	experiences,
+	expandAll = false
 }: {
 	className?: string
 	experiences: ExperienceItemType[]
+	expandAll?: boolean
 }) {
-	const [showAll, setShowAll] = React.useState(false)
-	const [showEducation, setShowEducation] = React.useState(false)
+	const [showAll, setShowAll] = React.useState(expandAll)
+	const [showEducation, setShowEducation] = React.useState(expandAll)
 
 	const currentJob = experiences.find(
 		exp => exp.isCurrentEmployer
@@ -72,7 +74,8 @@ export function WorkExperience({
 	const remainingJobs = workHistory.slice(1)
 
 	const educationCount = education?.positions.length ?? 0
-	const showEducationToggle = educationCount > 1
+	const showEducationToggle = educationCount > 1 && !expandAll
+	const historyExpanded = expandAll || showAll
 
 	return (
 		<div
@@ -84,6 +87,7 @@ export function WorkExperience({
 					key={currentJob.id}
 					experience={currentJob}
 					shouldExpandAll={true}
+					showCompanyDetails={expandAll}
 				/>
 			)}
 
@@ -92,8 +96,8 @@ export function WorkExperience({
 					id="experience-history"
 					className={cn(
 						'relative transition-[max-height] duration-700 ease-in-out',
-						showAll
-							? 'max-h-[2000px]'
+						historyExpanded
+							? 'max-h-[4000px]'
 							: 'max-h-[200px] overflow-hidden'
 					)}
 				>
@@ -102,13 +106,14 @@ export function WorkExperience({
 							key={previewJob.id}
 							experience={previewJob}
 							shouldExpandAll={true}
+							showCompanyDetails={expandAll}
 						/>
 					)}
 
 					<div
 						className={cn(
 							'space-y-4 transition-[opacity,transform] duration-700',
-							showAll
+							historyExpanded
 								? 'opacity-100 translate-y-0'
 								: 'opacity-0 translate-y-4 pointer-events-none'
 						)}
@@ -118,11 +123,12 @@ export function WorkExperience({
 								key={experience.id}
 								experience={experience}
 								shouldExpandAll={true}
+								showCompanyDetails={expandAll}
 							/>
 						))}
 					</div>
 
-					{!showAll && remainingJobs.length > 0 && (
+					{!historyExpanded && remainingJobs.length > 0 && (
 						<>
 							<div
 								className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background via-background/95 to-transparent z-30"
@@ -147,7 +153,7 @@ export function WorkExperience({
 					)}
 				</div>
 
-				{showAll && remainingJobs.length > 0 && (
+				{!expandAll && showAll && remainingJobs.length > 0 && (
 					<div className="flex justify-center py-2">
 						<button
 							type="button"
@@ -168,7 +174,10 @@ export function WorkExperience({
 					<ExperienceItem
 						key={education.id}
 						experience={education}
-						shouldExpandAll={showEducation || !showEducationToggle}
+						shouldExpandAll={
+							expandAll || showEducation || !showEducationToggle
+						}
+						showCompanyDetails={expandAll}
 					/>
 					{showEducationToggle && !showEducation && (
 						<div className="flex justify-center py-2">
@@ -205,10 +214,12 @@ export function WorkExperience({
 export function ExperienceItem({
 	experience,
 	shouldExpandAll = false,
+	showCompanyDetails = false,
 	className
 }: {
 	experience: ExperienceItemType
 	shouldExpandAll?: boolean
+	showCompanyDetails?: boolean
 	className?: string
 }) {
 	const initial = experience.companyName.charAt(0).toUpperCase()
@@ -229,7 +240,7 @@ export function ExperienceItem({
 					)}
 				</div>
 
-				<div className="flex flex-col">
+				<div className="flex min-w-0 flex-col">
 					<div className="flex items-center gap-3">
 						<h3 className="font-semibold text-foreground tracking-tight text-base">
 							{experience.companyName}
@@ -240,8 +251,19 @@ export function ExperienceItem({
 							</span>
 						)}
 					</div>
+					{showCompanyDetails && experience.companyMeta && (
+						<p className="mt-0.5 text-xs font-mono tracking-tight text-muted-foreground/70">
+							{experience.companyMeta}
+						</p>
+					)}
 				</div>
 			</div>
+
+			{showCompanyDetails && experience.companyDescription && (
+				<p className="mb-4 pl-12 text-sm leading-relaxed text-muted-foreground/80">
+					{experience.companyDescription}
+				</p>
+			)}
 
 			<div className="space-y-4">
 				{experience.positions.map((position, index) => (

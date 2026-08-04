@@ -35,7 +35,7 @@ export const ProjectShowcaseClient = memo(function ProjectShowcaseClient({
     if (projects.length === 0) return null;
 
     return (
-        <div className="flex flex-col border-t border-border">
+        <div className="flex flex-col">
             {projects.map((project) => (
                 <ProjectRow
                     key={project.name}
