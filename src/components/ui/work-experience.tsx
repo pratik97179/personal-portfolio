@@ -226,7 +226,6 @@ export function ExperienceItem({
 
 	return (
 		<div className={cn('relative pb-6 last:pb-0', className)}>
-			{}
 			<div
 				className="absolute left-4 top-0 bottom-0 w-px bg-border/50 -translate-x-[0.5px]"
 				aria-hidden="true"
@@ -322,7 +321,6 @@ export function ExperiencePositionItem({
 
 	return (
 		<div className="relative pl-12">
-			{}
 			<div className="absolute left-[4.5px] top-[3px] z-10 box-border flex size-6 items-center justify-center rounded-full border border-border bg-muted/30 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:border-border/80 hover:bg-muted/50 hover:text-foreground">
 				<Icon className="size-3" />
 			</div>

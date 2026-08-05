@@ -11,7 +11,10 @@ function createDb() {
 		)
 	}
 
-	const client = postgres(databaseUrl, { prepare: false })
+	const client = postgres(databaseUrl, {
+		prepare: false,
+		connect_timeout: 3
+	})
 	return drizzle(client, { schema })
 }
 

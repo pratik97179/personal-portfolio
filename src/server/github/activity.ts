@@ -13,6 +13,6 @@ export const getCachedGitHubActivity = unstable_cache(
 	async (limit: number) => {
 		return githubService.getRecentActivity(limit)
 	},
-	['github-activity-distinct'],
+	['github-activity-distinct-v2'],
 	{ revalidate: 30, tags: ['github'] }
 )

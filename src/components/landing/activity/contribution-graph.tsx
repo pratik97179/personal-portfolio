@@ -9,12 +9,18 @@ import {
 	useCombinedActivity
 } from '@/hooks/use-combined-activity'
 import type { GitHubEventDetail } from '@/hooks/use-github'
-import { useCurrentYear } from '@/hooks/use-current-year'
+import { getActivityDisplayMessage } from '@/features/github/display'
+import { ContributionGraphSkeleton } from '@/components/ui/skeletons/section-skeletons'
 import { toActivityDateKey } from '@/shared/lib/date'
 
 /** Matches Tailwind `md`. Below this, show fewer months so cells stay readable. */
 const MOBILE_VIEWPORT_MQ = '(max-width: 767px)'
 const MOBILE_MONTHS_BACK = 6
+
+function readMatchMedia(query: string) {
+	if (typeof window === 'undefined') return false
+	return window.matchMedia(query).matches
+}
 
 interface ActivityDay {
 	date: string
@@ -35,12 +41,10 @@ interface ActivityContributionGraphProps {
 }
 
 export function ActivityContributionGraph({
-	year,
+	year: _year,
 	showLegend = true,
 	className = ''
 }: ActivityContributionGraphProps) {
-	const currentYear = useCurrentYear()
-	const resolvedYear = year ?? currentYear
 	const [selectedDay, setSelectedDay] = useState<ActivityDay | null>(null)
 	const [hoveredDay, setHoveredDay] = useState<ActivityDay | null>(null)
 	const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
@@ -71,7 +75,7 @@ export function ActivityContributionGraph({
 				.then(data => {
 					if (data.events && Array.isArray(data.events)) {
 						const newCommits = data.events.map((event: any) => ({
-							message: event.title,
+							message: getActivityDisplayMessage(event),
 							url: event.url,
 							projectName: event.repository
 						}))
@@ -148,20 +152,20 @@ export function ActivityContributionGraph({
 
 	const graphRef = useRef<HTMLDivElement>(null)
 
-	const [isTouchDevice, setIsTouchDevice] = useState(false)
-	const [isMobileViewport, setIsMobileViewport] = useState(false)
+	const [isTouchDevice, setIsTouchDevice] = useState(() =>
+		readMatchMedia('(pointer: coarse)')
+	)
+	const [isMobileViewport, setIsMobileViewport] = useState(() =>
+		readMatchMedia(MOBILE_VIEWPORT_MQ)
+	)
 
 	useEffect(() => {
-		if (typeof window === 'undefined') return
-
 		const touchMedia = window.matchMedia('(pointer: coarse)')
 		const viewportMedia = window.matchMedia(MOBILE_VIEWPORT_MQ)
 
 		const syncTouch = () => setIsTouchDevice(touchMedia.matches)
 		const syncViewport = () => setIsMobileViewport(viewportMedia.matches)
 
-		syncTouch()
-		syncViewport()
 		touchMedia.addEventListener('change', syncTouch)
 		viewportMedia.addEventListener('change', syncViewport)
 
@@ -264,7 +268,7 @@ export function ActivityContributionGraph({
 						}
 						day.events.forEach(event => {
 							mapDay.details!.commits.push({
-								message: event.title,
+								message: getActivityDisplayMessage(event),
 								url: event.url,
 								projectName: event.repository
 							})
@@ -298,7 +302,7 @@ export function ActivityContributionGraph({
 		})
 
 		return Array.from(activityMap.values())
-	}, [githubContributions, tracks, resolvedYear, loading, detailedEvents, startDate])
+	}, [githubContributions, tracks, detailedEvents, startDate])
 
 	const getColorForLevel = (level: number) => {
 		if (level === 0) {
@@ -356,14 +360,13 @@ export function ActivityContributionGraph({
 	}, [startDate])
 
 	const weeks = useMemo(() => {
+		const byDate = new Map(activityData.map(day => [day.date, day]))
 		const weeksArray: ActivityDay[][] = []
-		const start = startDate
 		const startKey = toActivityDateKey(startDate)
 		const todayKey = toActivityDateKey(new Date())
 
-		let currentDate = new Date(start)
-		const dayOfWeek = currentDate.getDay()
-		currentDate.setDate(currentDate.getDate() - dayOfWeek)
+		const currentDate = new Date(startDate)
+		currentDate.setDate(currentDate.getDate() - currentDate.getDay())
 
 		const emptyDay = (): ActivityDay => ({
 			date: '',
@@ -385,9 +388,8 @@ export function ActivityContributionGraph({
 				) {
 					week.push(emptyDay())
 				} else {
-					const day = activityData.find(d => d.date === dateStr)
 					week.push(
-						day || {
+						byDate.get(dateStr) || {
 							date: dateStr,
 							githubCount: 0,
 							spotifyCount: 0,
@@ -403,14 +405,6 @@ export function ActivityContributionGraph({
 
 		return weeksArray
 	}, [activityData, startDate, totalWeeks])
-
-	const cellDelays = useMemo(() => {
-		const total = totalWeeks * 7
-		return Array.from({ length: total }, (_, i) => {
-			const hash = Math.sin(i * 12.9898) * 43758.5453
-			return (hash - Math.floor(hash)) * 600
-		})
-	}, [totalWeeks])
 
 	const monthLabels = useMemo(() => {
 		const labels: { month: string; weekIndex: number }[] = []
@@ -466,9 +460,17 @@ export function ActivityContributionGraph({
 		return `${githubLabel}${spotifyLabel} on ${dateLabel}`
 	}
 
+	if (loading) {
+		return (
+			<ContributionGraphSkeleton
+				weeks={totalWeeks}
+				className={className}
+			/>
+		)
+	}
+
 	return (
 		<div className={`space-y-2 ${className}`}>
-			{}
 			<div
 				ref={graphRef}
 				className="w-full overflow-hidden"
@@ -480,7 +482,6 @@ export function ActivityContributionGraph({
 					{totalContributions} total contributions
 				</h2>
 				<div className="flex flex-col w-full relative">
-					{}
 					<div
 						className="grid w-full mb-1 relative h-[15px] gap-[3px]"
 						style={{
@@ -518,7 +519,6 @@ export function ActivityContributionGraph({
 						<div aria-hidden className="pointer-events-none" />
 					</div>
 
-					{}
 					<div
 						className="grid w-full gap-[3px]"
 						style={{
@@ -533,9 +533,6 @@ export function ActivityContributionGraph({
 							>
 								{week.map((day, dayIndex) => {
 									const hasData = !!day.date
-									const delayMs =
-										cellDelays[weekIndex * 7 + dayIndex] ??
-										0
 
 									return (
 										<button
@@ -554,7 +551,7 @@ export function ActivityContributionGraph({
 													? 'dialog'
 													: undefined
 											}
-											className={`cell-pop-in w-full aspect-square rounded-[2px] transition-[background-color,border-color,box-shadow] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+											className={`cell-pop-in w-full aspect-square rounded-[2px] transition-[border-color,box-shadow] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
 												hasData ? 'cursor-pointer' : ''
 											} ${
 												hasData
@@ -563,9 +560,6 @@ export function ActivityContributionGraph({
 														)
 													: 'bg-transparent border-0 opacity-0 pointer-events-none'
 											}`}
-											style={{
-												animationDelay: `${delayMs}ms`
-											}}
 											onMouseEnter={e =>
 												hasData &&
 												handleMouseEnter(e, day)
@@ -632,7 +626,6 @@ export function ActivityContributionGraph({
 							damping: 25
 						}}
 					>
-						{}
 						<div className="flex justify-between items-center p-4 border-b border-border shrink-0">
 							<div className="flex items-center gap-3">
 								<div
@@ -689,10 +682,8 @@ export function ActivityContributionGraph({
 							</button>
 						</div>
 
-						{}
 						<div className="overflow-y-auto flex-1 p-4">
 							<div className="space-y-3">
-								{}
 								{(() => {
 									const commits =
 										selectedDay.details?.commits || []
@@ -753,7 +744,6 @@ export function ActivityContributionGraph({
 													key={projectName}
 													className="space-y-2"
 												>
-													{}
 													<div className="flex items-center gap-2 text-xs">
 														{isPrivate ? (
 															<span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/10 text-amber-500 font-medium">
@@ -802,7 +792,6 @@ export function ActivityContributionGraph({
 														</span>
 													</div>
 
-													{}
 													<div className="space-y-1 pl-2 border-l-2 border-border ml-1">
 														{projectCommits
 															.slice(0, 10)
@@ -860,7 +849,6 @@ export function ActivityContributionGraph({
 								})()}
 							</div>
 
-							{}
 							{selectedDay.details?.tracks &&
 								selectedDay.details.tracks.length > 0 && (
 									<div className="mt-4 pt-4 border-t border-border">
@@ -910,7 +898,6 @@ export function ActivityContributionGraph({
 				</motion.div>
 			)}
 
-			{}
 			{hoveredDay &&
 				hoveredDay.date &&
 				typeof document !== 'undefined' &&

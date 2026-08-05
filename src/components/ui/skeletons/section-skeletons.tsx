@@ -123,12 +123,10 @@ export function ActivitySectionSkeleton() {
 			</div>
 
 			<div className="space-y-4 pt-3">
-				{}
 				<div className="px-4 md:px-5">
 					<Skeleton className="h-4 w-full max-w-xl" />
 				</div>
 
-				{}
 				<div className="px-4 md:px-5">
 					<div
 						className="space-y-2 w-full"
@@ -136,7 +134,6 @@ export function ActivitySectionSkeleton() {
 						aria-label="Loading contribution graph"
 						aria-hidden="true"
 					>
-						{}
 						<div
 							className="grid w-full mb-1 relative h-[15px] gap-[3px]"
 							style={{ gridTemplateColumns: 'repeat(53, 1fr)' }}
@@ -153,7 +150,6 @@ export function ActivitySectionSkeleton() {
 							))}
 						</div>
 
-						{}
 						<div
 							className="grid w-full gap-[3px]"
 							style={{ gridTemplateColumns: 'repeat(53, 1fr)' }}
@@ -173,7 +169,6 @@ export function ActivitySectionSkeleton() {
 							))}
 						</div>
 
-						{}
 						<div className="flex items-center justify-between text-[10px] text-muted-foreground/50">
 							<div className="flex items-center gap-[2px]">
 								{LEGEND_OPACITIES.map((opacity, i) => (
@@ -189,7 +184,6 @@ export function ActivitySectionSkeleton() {
 					</div>
 				</div>
 
-				{}
 				<div className="px-4 md:px-5">
 					<div className="relative overflow-hidden rounded-none border border-border/30 bg-gradient-to-br from-background/80 via-background/50 to-background/80 backdrop-blur-sm">
 						<div
@@ -246,24 +240,20 @@ export function LanguageStatsSkeleton() {
 			aria-busy="true"
 			aria-label="Loading language stats"
 		>
-			{}
 			<div className="flex items-center justify-between gap-2 px-4">
 				<Skeleton className="h-5 w-40" />
 				<Skeleton className="h-5 w-24" />
 			</div>
 
-			{}
 			{[1, 2, 3].map(i => (
 				<div
 					key={i}
 					className="flex items-start gap-3 px-4 py-3 border border-border/30 bg-background/50 hover:bg-muted/30"
 				>
-					{}
 					<div className="shrink-0">
 						<div className="w-8 h-8 bg-muted/20 rounded-lg animate-pulse will-change-opacity" />
 					</div>
 
-					{}
 					<div className="flex-1 min-w-0 space-y-2">
 						<div className="flex items-center justify-between">
 							<Skeleton className="h-4 w-32" />
@@ -272,7 +262,6 @@ export function LanguageStatsSkeleton() {
 
 						<Skeleton className="h-3 w-16" />
 
-						{}
 						<div className="flex flex-wrap gap-1.5 mt-1.5">
 							<Skeleton className="h-6 w-20 rounded-full will-change-opacity" />
 							<Skeleton className="h-6 w-24 rounded-full will-change-opacity" />
@@ -285,32 +274,48 @@ export function LanguageStatsSkeleton() {
 	)
 }
 
-export function ContributionGraphSkeleton() {
+export function ContributionGraphSkeleton({
+	weeks = 53,
+	className = ''
+}: {
+	weeks?: number
+	className?: string
+}) {
+	const weekIndexes = Array.from({ length: weeks }, (_, i) => i)
+
 	return (
 		<div
-			className="space-y-2 w-full"
+			className={`space-y-2 w-full ${className}`}
 			role="img"
 			aria-label="Loading contribution graph"
+			aria-busy="true"
 		>
-			{}
 			<div
-				className="flex w-full text-[10px] text-muted-foreground/50 h-[15px]"
+				className="grid w-full mb-1 relative h-[15px] gap-[3px]"
+				style={{
+					gridTemplateColumns: `1fr repeat(${weeks}, 1fr) 1fr`
+				}}
 				aria-hidden="true"
 			>
-				{MONTHS.map(month => (
-					<span key={month} className="flex-1">
-						{month}
-					</span>
+				<div aria-hidden className="pointer-events-none" />
+				{weekIndexes.map(weekIndex => (
+					<div
+						key={weekIndex}
+						className="relative overflow-visible z-20"
+					/>
 				))}
+				<div aria-hidden className="pointer-events-none" />
 			</div>
 
-			{}
 			<div
 				className="grid w-full gap-[3px]"
-				style={{ gridTemplateColumns: 'repeat(53, 1fr)' }}
+				style={{
+					gridTemplateColumns: `1fr repeat(${weeks}, 1fr) 1fr`
+				}}
 				aria-hidden="true"
 			>
-				{WEEKS.map(weekIndex => (
+				<div aria-hidden className="pointer-events-none" />
+				{weekIndexes.map(weekIndex => (
 					<div key={weekIndex} className="flex flex-col gap-[3px]">
 						{DAYS.map(dayIndex => (
 							<div
@@ -320,9 +325,9 @@ export function ContributionGraphSkeleton() {
 						))}
 					</div>
 				))}
+				<div aria-hidden className="pointer-events-none" />
 			</div>
 
-			{}
 			<div
 				className="flex items-center justify-between text-[10px] text-muted-foreground/50"
 				aria-hidden="true"
@@ -365,18 +370,14 @@ export function BlogPostsSkeleton() {
 						className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-6 justify-between py-3 border-b border-border/30 last:border-0"
 					>
 						<div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 min-w-0 flex-1">
-							{}
 							<Skeleton className="h-4 w-24 shrink-0" />
 
 							<div className="min-w-0 flex-1 space-y-2">
-								{}
 								<Skeleton className="h-5 w-48" />
-								{}
 								<Skeleton className="h-4 w-full max-w-md hidden sm:block" />
 							</div>
 						</div>
 
-						{}
 						<div className="hidden sm:flex items-center gap-4">
 							<Skeleton className="h-3 w-16" />
 							<Skeleton className="h-3 w-12" />
@@ -395,31 +396,26 @@ export function WorkExperienceSkeleton() {
 			aria-busy="true"
 			aria-label="Loading work experience"
 		>
-			{}
 			<div className="full-width-header">
 				<div className="header-content-container flex items-center justify-between header-content-container--with-padding">
 					<Skeleton className="h-5 w-32" />
 				</div>
 			</div>
 
-			{}
 			<div className="px-4 md:px-5 pt-3 space-y-4">
 				{EXPERIENCE_ITEMS.map(i => (
 					<div
 						key={i}
 						className="flex gap-4 py-3 border-b border-border/30 last:border-0"
 					>
-						{}
 						<div className="w-10 h-10 rounded-lg bg-muted/20 shrink-0" />
 
-						{}
 						<div className="flex-1 space-y-2">
 							<div className="flex items-center justify-between">
 								<Skeleton className="h-4 w-40" />
 								<Skeleton className="h-3 w-24" />
 							</div>
 							<Skeleton className="h-3 w-32" />
-							{}
 							<div className="flex gap-2 pt-1">
 								<Skeleton className="h-5 w-16 rounded-full" />
 								<Skeleton className="h-5 w-20 rounded-full" />

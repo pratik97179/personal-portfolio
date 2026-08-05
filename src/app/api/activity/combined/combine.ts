@@ -6,6 +6,35 @@ import { getSpotifyTracks } from '@/server/spotify'
 import { getYTMusicTracks, hasYTMusicCredentials } from '@/server/ytmusic'
 import type { CombinedActivityResponse } from './types'
 
+const MUSIC_FETCH_BUDGET_MS = 400
+
+async function withTimeout<T>(
+	promise: Promise<T>,
+	ms: number,
+	fallback: T
+): Promise<T> {
+	let timer: ReturnType<typeof setTimeout> | undefined
+	try {
+		return await Promise.race([
+			promise,
+			new Promise<T>(resolve => {
+				timer = setTimeout(() => resolve(fallback), ms)
+			})
+		])
+	} finally {
+		if (timer) clearTimeout(timer)
+	}
+}
+
+async function getMusicTracks(tracksLimit: number) {
+	const spotifyTracks = await getSpotifyTracks(tracksLimit)
+	if (spotifyTracks.length > 0) return spotifyTracks
+
+	if (!hasYTMusicCredentials()) return []
+
+	return getYTMusicTracks(tracksLimit)
+}
+
 export async function getCombinedActivity(
 	activityLimit: number,
 	tracksLimit: number
@@ -17,16 +46,12 @@ export async function getCombinedActivity(
 		currentYearContributions,
 		previousYearContributions,
 		recentActivity,
-		spotifyTracks,
-		ytmTracks
+		tracks
 	] = await Promise.all([
 		getCachedGitHubContributions(currentYear),
 		getCachedGitHubContributions(previousYear),
 		getCachedGitHubActivity(activityLimit),
-		getSpotifyTracks(tracksLimit),
-		hasYTMusicCredentials()
-			? getYTMusicTracks(tracksLimit)
-			: Promise.resolve([] as any[])
+		withTimeout(getMusicTracks(tracksLimit), MUSIC_FETCH_BUDGET_MS, [])
 	])
 
 	const contributionsMap: Record<
@@ -46,8 +71,6 @@ export async function getCombinedActivity(
 			}
 		}
 	}
-
-	const tracks = spotifyTracks.length > 0 ? spotifyTracks : ytmTracks
 
 	return {
 		contributions: Object.values(contributionsMap),

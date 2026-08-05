@@ -5,6 +5,7 @@ import {
     useCombinedActivity,
 } from "@/hooks/use-combined-activity";
 import type { GitHubEventDetail } from "@/hooks/use-github";
+import { getActivityOverviewLabel } from "@/features/github/display";
 import { useSpotifyPlayback } from "@/hooks/use-spotify-playback";
 import {
     AlertCircle,
@@ -22,7 +23,11 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion, PanInfo } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ProjectHoverWrapper, SpotifyHoverWrapper } from "./hover-wrappers";
+import {
+    ActivityHoverWrapper,
+    ProjectHoverWrapper,
+    SpotifyHoverWrapper,
+} from "./hover-wrappers";
 
 const SMOOTH_EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
 const SPOTIFY_TRACKS_CACHE_KEY = "activity-feed:spotify-tracks";
@@ -431,7 +436,7 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({
-    activityCount = 5,
+    activityCount = 8,
     rotationInterval = 4500,
 }: ActivityFeedProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -636,7 +641,6 @@ export function ActivityFeed({
                     </div>
                 </div>
 
-                {}
                 <div
                     className="h-6 flex items-center px-0 pb-1"
                     aria-hidden="true"
@@ -665,6 +669,7 @@ export function ActivityFeed({
         currentIndex,
         currentActivity.title,
     );
+    const badgeLabel = getActivityOverviewLabel(currentActivity);
     const isPrivate = currentActivity.isPrivate;
 
     return (
@@ -708,7 +713,6 @@ export function ActivityFeed({
                             exit="exit"
                             className="text-[13px] leading-relaxed space-y-2"
                         >
-                            {}
                             <div className="relative flex items-center gap-1.5 min-w-0 pr-24">
                                 <motion.span
                                     variants={wordVariants}
@@ -761,14 +765,22 @@ export function ActivityFeed({
                                 {grammar.showEventBadge && (
                                     <motion.span
                                         variants={highlightVariants}
-                                        className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-muted/40 border border-border/40 rounded-[4px] min-w-0 shrink"
+                                        className="min-w-0 shrink"
                                     >
-                                        <span className="opacity-60 shrink-0">
-                                            {getEventIcon(currentActivity.type)}
-                                        </span>
-                                        <span className="font-medium text-[12px] text-foreground/80 truncate">
-                                            {currentActivity.title}
-                                        </span>
+                                        <ActivityHoverWrapper
+                                            activity={currentActivity}
+                                        >
+                                            <span className="inline-flex max-w-full items-center gap-1.5 px-2 py-0.5 bg-muted/40 border border-border/40 rounded-[4px] min-w-0">
+                                                <span className="opacity-60 shrink-0">
+                                                    {getEventIcon(
+                                                        currentActivity.type,
+                                                    )}
+                                                </span>
+                                                <span className="font-medium text-[12px] text-foreground/80 truncate">
+                                                    {badgeLabel}
+                                                </span>
+                                            </span>
+                                        </ActivityHoverWrapper>
                                     </motion.span>
                                 )}
 
@@ -782,7 +794,6 @@ export function ActivityFeed({
                                     )}
                                 </motion.span>
 
-                                {}
                                 <div className="absolute right-0 top-0 sm:relative sm:right-auto sm:top-auto flex items-center gap-1 text-muted-foreground/40 shrink-0 ml-auto">
                                     <button
                                         onClick={goToPrevSlide}
@@ -829,7 +840,6 @@ export function ActivityFeed({
                                 </div>
                             </div>
 
-                            {}
                             <div className="flex items-center gap-1.5 min-w-0 border-t border-border/30 pt-2">
                                 <motion.span
                                     variants={wordVariants}
@@ -903,7 +913,6 @@ export function ActivityFeed({
                             onDragEnd={(_, info) => handleDragEnd(info)}
                             className="text-[13px] leading-relaxed space-y-2"
                         >
-                            {}
                             <div className="flex items-center gap-1.5 min-w-0 pr-8">
                                 <span className="text-muted-foreground/80 font-normal shrink-0">
                                     {grammar.prefix}
@@ -943,13 +952,21 @@ export function ActivityFeed({
                                     )}
 
                                 {grammar.showEventBadge && (
-                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-muted/40 border border-border/40 rounded-[4px] text-foreground/90 font-medium min-w-0 shrink">
-                                        <span className="opacity-70 shrink-0">
-                                            {getEventIcon(currentActivity.type)}
-                                        </span>
-                                        <span className="truncate text-[12px]">
-                                            {currentActivity.title}
-                                        </span>
+                                    <span className="min-w-0 shrink">
+                                        <ActivityHoverWrapper
+                                            activity={currentActivity}
+                                        >
+                                            <span className="inline-flex max-w-full items-center gap-1.5 px-2 py-0.5 bg-muted/40 border border-border/40 rounded-[4px] text-foreground/90 font-medium min-w-0">
+                                                <span className="opacity-70 shrink-0">
+                                                    {getEventIcon(
+                                                        currentActivity.type,
+                                                    )}
+                                                </span>
+                                                <span className="truncate text-[12px]">
+                                                    {badgeLabel}
+                                                </span>
+                                            </span>
+                                        </ActivityHoverWrapper>
                                     </span>
                                 )}
 
@@ -963,7 +980,6 @@ export function ActivityFeed({
                                 </span>
                             </div>
 
-                            {}
                             <div className="flex items-center gap-1.5 min-w-0 border-t border-border/40 pt-2">
                                 {displayTrack ? (
                                     <>

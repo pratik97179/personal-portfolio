@@ -21,7 +21,8 @@ export async function GET(request: Request) {
 
 	return NextResponse.json(combinedActivity, {
 		headers: {
-			'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+			'Cache-Control':
+				'public, max-age=30, s-maxage=30, stale-while-revalidate=60'
 		}
 	})
 }

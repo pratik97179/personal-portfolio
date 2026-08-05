@@ -8,6 +8,25 @@ import {
 import type { SpotifyTrack } from './types'
 
 const SPOTIFY_API_BASE = 'https://api.spotify.com/v1'
+const STORED_TRACKS_BUDGET_MS = 150
+
+async function withTimeout<T>(
+	promise: Promise<T>,
+	ms: number,
+	fallback: T
+): Promise<T> {
+	let timer: ReturnType<typeof setTimeout> | undefined
+	try {
+		return await Promise.race([
+			promise,
+			new Promise<T>(resolve => {
+				timer = setTimeout(() => resolve(fallback), ms)
+			})
+		])
+	} finally {
+		if (timer) clearTimeout(timer)
+	}
+}
 
 export const getStoredSpotifyTracks = unstable_cache(
 	async (limit: number): Promise<SpotifyTrack[]> => {
@@ -35,24 +54,35 @@ export const getStoredSpotifyTracks = unstable_cache(
 	{ revalidate: 300, tags: ['spotify'] }
 )
 
+async function getStoredSpotifyTracksNonBlocking(
+	limit: number
+): Promise<SpotifyTrack[]> {
+	return withTimeout(
+		getStoredSpotifyTracks(limit),
+		STORED_TRACKS_BUDGET_MS,
+		[]
+	)
+}
+
 export const getSpotifyTracks = unstable_cache(
 	async (limit: number): Promise<SpotifyTrack[]> => {
 		try {
 			if (!hasSpotifyCredentials()) {
-				return getStoredSpotifyTracks(limit)
+				return getStoredSpotifyTracksNonBlocking(limit)
 			}
 
 			const accessToken = await getSpotifyAccessToken()
-			if (!accessToken) return getStoredSpotifyTracks(limit)
+			if (!accessToken) return getStoredSpotifyTracksNonBlocking(limit)
 
 			const response = await fetch(
 				`${SPOTIFY_API_BASE}/me/player/recently-played?limit=${limit}`,
 				{
-					headers: { Authorization: `Bearer ${accessToken}` }
+					headers: { Authorization: `Bearer ${accessToken}` },
+					signal: AbortSignal.timeout(1200)
 				}
 			)
 
-			if (!response.ok) return getStoredSpotifyTracks(limit)
+			if (!response.ok) return getStoredSpotifyTracksNonBlocking(limit)
 
 			const data = await response.json()
 			const recentTracks: SpotifyTrack[] =
@@ -70,10 +100,10 @@ export const getSpotifyTracks = unstable_cache(
 
 			return recentTracks.length > 0
 				? recentTracks
-				: getStoredSpotifyTracks(limit)
+				: getStoredSpotifyTracksNonBlocking(limit)
 		} catch (error) {
 			console.error('Error fetching Spotify tracks:', error)
-			return getStoredSpotifyTracks(limit)
+			return getStoredSpotifyTracksNonBlocking(limit)
 		}
 	},
 	['spotify-recent'],

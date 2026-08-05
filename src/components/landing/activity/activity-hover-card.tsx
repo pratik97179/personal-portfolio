@@ -6,6 +6,57 @@ import { motion, AnimatePresence } from 'motion/react'
 import Image from 'next/image'
 import type { Route } from 'next'
 import Link from 'next/link'
+import {
+	AlertCircle,
+	Box,
+	Copy,
+	Eye,
+	GitBranch,
+	GitCommit,
+	GitPullRequest,
+	Plus,
+	Star
+} from 'lucide-react'
+import { getActivityDisplayMessage } from '@/features/github/display'
+import type { GitHubEventType } from '@/features/github/types'
+
+function ActivityTypeIcon({ type }: { type: GitHubEventType }) {
+	const className = 'size-4 text-primary'
+	switch (type) {
+		case 'commit':
+			return <GitCommit className={className} />
+		case 'pr':
+			return <GitPullRequest className={className} />
+		case 'issue':
+			return <AlertCircle className={className} />
+		case 'review':
+			return <Eye className={className} />
+		case 'release':
+			return <Box className={className} />
+		case 'fork':
+			return <Copy className={className} />
+		case 'star':
+			return <Star className={className} />
+		case 'create':
+			return <Plus className={className} />
+		default:
+			return <GitBranch className={className} />
+	}
+}
+
+function formatActivityTimestamp(ts: string) {
+	const date = new Date(ts)
+	const diffMs = Date.now() - date.getTime()
+	const diffMins = Math.floor(diffMs / (1000 * 60))
+	const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+	if (diffMins < 1) return 'just now'
+	if (diffMins < 60) return `${diffMins}m ago`
+	if (diffHours < 24) return `${diffHours}h ago`
+	if (diffDays < 7) return `${diffDays}d ago`
+	return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
 
 function useIsMobile() {
 	const [isMobile, setIsMobile] = useState(false)
@@ -126,14 +177,14 @@ export function ActivityHoverCard({
 	}, [isOpen, isMobile])
 
 	if (isMobile) {
-		return <span className="inline-block">{trigger}</span>
+		return <span className="inline-block max-w-full min-w-0">{trigger}</span>
 	}
 
 	return (
 		<>
 			<span
 				ref={triggerRef}
-				className="inline-block"
+				className="inline-block max-w-full min-w-0"
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 			>
@@ -169,7 +220,7 @@ export function ActivityHoverCard({
 								onMouseEnter={handleMouseEnter}
 								onMouseLeave={handleMouseLeave}
 							>
-								<div className="rounded-none border border-border/50 bg-background/95 backdrop-blur-md shadow-xl p-3 min-w-[280px] max-w-[320px]">
+								<div className="rounded-[4px] border border-border/40 bg-background/95 backdrop-blur-md shadow-xl p-3 min-w-[260px] max-w-[300px]">
 									{children}
 								</div>
 							</motion.div>
@@ -306,12 +357,13 @@ export function GitHubProjectCard({
 }
 
 interface GitHubActivityCardProps {
-	type: string
+	type: GitHubEventType
 	title: string
 	description?: string
 	repository: string
 	timestamp: string
 	url: string
+	payload?: unknown
 }
 
 export function GitHubActivityCard({
@@ -320,45 +372,41 @@ export function GitHubActivityCard({
 	description,
 	repository,
 	timestamp,
-	url
+	url,
+	payload
 }: GitHubActivityCardProps) {
-	const formatTime = (ts: string) => {
-		const date = new Date(ts)
-		return date.toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		})
-	}
+	const headline = getActivityDisplayMessage({
+		type,
+		title,
+		description: description || '',
+		payload,
+		url
+	})
+	const repoName = repository.split('/').pop() || repository
 
 	return (
-		<div className="space-y-2">
-			<div className="flex items-center justify-between">
-				<span className="text-xs font-medium text-primary capitalize">
-					{type}
-				</span>
-				<span className="text-xs text-muted-foreground">
-					{formatTime(timestamp)}
-				</span>
+		<a
+			href={url}
+			target="_blank"
+			rel="noopener noreferrer"
+			className="flex items-start gap-3 group"
+		>
+			<div className="size-9 shrink-0 rounded-[4px] bg-primary/5 border border-primary/20 flex items-center justify-center">
+				<ActivityTypeIcon type={type} />
 			</div>
-			<a
-				href={url}
-				target="_blank"
-				rel="noopener noreferrer"
-				className="block font-medium text-foreground hover:text-primary transition-colors"
-			>
-				{title}
-			</a>
-			{description && (
-				<p className="text-sm text-muted-foreground line-clamp-3">
-					{description}
+			<div className="min-w-0 flex-1 space-y-1">
+				<p className="text-[13px] font-medium leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2">
+					{headline}
 				</p>
-			)}
-			<div className="text-xs text-muted-foreground pt-1 border-t border-border/30">
-				{repository}
+				<div className="flex items-center gap-1.5 text-[12px] text-muted-foreground min-w-0">
+					<span className="truncate">{repoName}</span>
+					<span className="text-muted-foreground/40 shrink-0">·</span>
+					<span className="shrink-0 tabular-nums">
+						{formatActivityTimestamp(timestamp)}
+					</span>
+				</div>
 			</div>
-		</div>
+		</a>
 	)
 }
 

@@ -259,7 +259,8 @@ class GitHubService {
 			const response = await fetch(`${this.baseUrl}/graphql`, {
 				method: 'POST',
 				headers: this.getHeaders(),
-				body: JSON.stringify({ query, variables })
+				body: JSON.stringify({ query, variables }),
+				signal: AbortSignal.timeout(4000)
 			})
 
 			if (!response.ok) {
@@ -1001,7 +1002,7 @@ class GitHubService {
 	}
 
 	async getRecentActivity(limit: number = 10): Promise<GitHubEventDetail[]> {
-	if (shouldSkipLiveGitHubFetches()) {
+		if (shouldSkipLiveGitHubFetches()) {
 			return []
 		}
 
@@ -1010,7 +1011,8 @@ class GitHubService {
 				`${this.baseUrl}/users/${this.username}/events?per_page=50`,
 				{
 					headers: this.getHeaders(),
-					next: { revalidate: 60 }
+					next: { revalidate: 60 },
+					signal: AbortSignal.timeout(3000)
 				} as any
 			)
 
@@ -1030,11 +1032,153 @@ class GitHubService {
 				}
 			}
 
-			return selectDistinctRecentActivity(details, limit)
+			const selected = selectDistinctRecentActivity(details, limit)
+			return this.enrichCommitMessages(selected)
 		} catch (error) {
 			console.error('Error fetching recent activity:', error)
 			return []
 		}
+	}
+
+	private needsCommitMessageEnrichment(detail: GitHubEventDetail): boolean {
+		if (detail.type !== 'commit') return false
+		const description = detail.description?.trim() || ''
+		return (
+			!description ||
+			description === 'Pushed commits' ||
+			description.startsWith('Updates on ')
+		)
+	}
+
+	private getCommitHeadSha(detail: GitHubEventDetail): string | null {
+		const payload = detail.payload as { head?: string } | null | undefined
+		if (typeof payload?.head === 'string' && payload.head) {
+			return payload.head
+		}
+
+		const match = detail.url.match(/\/commit\/([a-f0-9]+)$/i)
+		return match?.[1] || null
+	}
+
+	private async fetchCommitMessage(
+		repository: string,
+		sha: string
+	): Promise<string | null> {
+		try {
+			const response = await fetch(
+				`${this.baseUrl}/repos/${repository}/commits/${sha}`,
+				{
+					headers: this.getHeaders(),
+					next: { revalidate: 300 },
+					signal: AbortSignal.timeout(2500)
+				} as any
+			)
+
+			if (!response.ok) return null
+
+			const data = await response.json()
+			const message = data.commit?.message?.split('\n')[0]?.trim()
+			return message || null
+		} catch {
+			return null
+		}
+	}
+
+	private async fetchCommitMessagesBatch(
+		targets: Array<{ index: number; repository: string; sha: string }>
+	): Promise<Map<number, string>> {
+		const messages = new Map<number, string>()
+		if (targets.length === 0) return messages
+
+		const aliases = targets.map((target, i) => {
+			const [owner, name] = target.repository.split('/')
+			const alias = `c${i}`
+			return {
+				alias,
+				index: target.index,
+				owner,
+				name,
+				sha: target.sha,
+				fragment: `${alias}: repository(owner: ${JSON.stringify(owner)}, name: ${JSON.stringify(name)}) { object(oid: ${JSON.stringify(target.sha)}) { ... on Commit { messageHeadline } } }`
+			}
+		})
+
+		const valid = aliases.filter(item => item.owner && item.name)
+		if (valid.length === 0) return messages
+
+		try {
+			const query = `query {\n${valid.map(item => item.fragment).join('\n')}\n}`
+			const response = await fetch(`${this.baseUrl}/graphql`, {
+				method: 'POST',
+				headers: this.getHeaders(),
+				body: JSON.stringify({ query }),
+				signal: AbortSignal.timeout(4000)
+			})
+
+			if (!response.ok) return messages
+
+			const payload = await response.json()
+			if (!payload?.data) return messages
+
+			for (const item of valid) {
+				const headline =
+					payload.data[item.alias]?.object?.messageHeadline?.trim()
+				if (headline) messages.set(item.index, headline)
+			}
+		} catch {
+			// Fall through to per-commit REST enrichment for misses.
+		}
+
+		return messages
+	}
+
+	private async enrichCommitMessages(
+		details: GitHubEventDetail[]
+	): Promise<GitHubEventDetail[]> {
+		const targets: Array<{
+			index: number
+			repository: string
+			sha: string
+		}> = []
+
+		details.forEach((detail, index) => {
+			if (!this.needsCommitMessageEnrichment(detail)) return
+			const sha = this.getCommitHeadSha(detail)
+			if (!sha) return
+			targets.push({ index, repository: detail.repository, sha })
+		})
+
+		if (targets.length === 0) return details
+
+		const enriched = [...details]
+		const batchMessages = await this.fetchCommitMessagesBatch(targets)
+
+		const missing = targets.filter(target => !batchMessages.has(target.index))
+
+		for (const [index, message] of batchMessages) {
+			enriched[index] = { ...enriched[index], description: message }
+		}
+
+		// Small REST fallback for anything GraphQL missed (private/odd refs).
+		const fallbackResults = await Promise.all(
+			missing.map(async target => {
+				const message = await this.fetchCommitMessage(
+					target.repository,
+					target.sha
+				)
+				return { index: target.index, message }
+			})
+		)
+
+		for (const result of fallbackResults) {
+			if (!result.message) continue
+			enriched[result.index] = {
+				...enriched[result.index],
+				description: result.message
+			}
+		}
+
+		return enriched
 	}
 }
 

@@ -44,7 +44,8 @@ export async function getSpotifyAccessToken(): Promise<string | null> {
 			body: new URLSearchParams({
 				grant_type: 'refresh_token',
 				refresh_token: refreshToken
-			})
+			}),
+			signal: AbortSignal.timeout(1200)
 		})
 
 		if (!response.ok) {

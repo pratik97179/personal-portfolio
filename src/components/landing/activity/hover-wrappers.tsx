@@ -86,6 +86,7 @@ export function ActivityHoverWrapper({ children, activity }: HoverProps) {
 				repository={activity.repository}
 				timestamp={activity.timestamp}
 				url={activity.url}
+				payload={activity.payload}
 			/>
 		</ActivityHoverCard>
 	)

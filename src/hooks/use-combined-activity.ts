@@ -30,8 +30,7 @@ export function useCombinedActivity(activityLimit = 5, tracksLimit = 10) {
 		],
 		queryFn: async (): Promise<CombinedActivityData> => {
 			const response = await fetch(
-				`/api/activity/combined?activityLimit=${resolvedActivityLimit}&tracksLimit=${resolvedTracksLimit}`,
-				{ cache: 'no-store' }
+				`/api/activity/combined?activityLimit=${resolvedActivityLimit}&tracksLimit=${resolvedTracksLimit}`
 			)
 			if (!response.ok) {
 				throw new Error('Failed to fetch combined activity')
@@ -43,8 +42,8 @@ export function useCombinedActivity(activityLimit = 5, tracksLimit = 10) {
 		refetchOnWindowFocus: true,
 		refetchOnReconnect: true,
 		refetchInterval: 60 * 1000,
-		retry: 2,
-		retryDelay: 1000,
+		retry: 1,
+		retryDelay: 500,
 		placeholderData: keepPreviousData
 	})
 }
