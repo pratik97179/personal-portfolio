@@ -6,7 +6,7 @@ export const getCachedGitHubContributions = unstable_cache(
 		return githubService.getYearlyContributions(year)
 	},
 	['github-contributions'],
-	{ revalidate: 300, tags: ['github'] }
+	{ revalidate: 60, tags: ['github'] }
 )
 
 export const getCachedGitHubActivity = unstable_cache(
@@ -14,5 +14,5 @@ export const getCachedGitHubActivity = unstable_cache(
 		return githubService.getRecentActivity(limit)
 	},
 	['github-activity-distinct'],
-	{ revalidate: 60, tags: ['github'] }
+	{ revalidate: 30, tags: ['github'] }
 )
