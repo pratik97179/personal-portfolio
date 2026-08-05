@@ -67,7 +67,7 @@ export const ProjectRow = memo(function ProjectRow({
         >
             <div
                 className={cn(
-                    "group flex items-center justify-between px-2 sm:px-3 py-2",
+                    "group flex items-center justify-between px-4 sm:px-5 py-2",
                     !isDesktop && "cursor-pointer",
                 )}
                 onClick={() => {
@@ -211,7 +211,7 @@ export const ProjectRow = memo(function ProjectRow({
                                 </Suspense>
                             )}
 
-                            <div className="space-y-3 px-2 sm:px-3 py-3">
+                            <div className="space-y-3 px-4 sm:px-5 py-3">
                                 <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                                     {project.description}
                                 </p>

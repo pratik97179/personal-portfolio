@@ -12,6 +12,10 @@ import type { GitHubEventDetail } from '@/hooks/use-github'
 import { useCurrentYear } from '@/hooks/use-current-year'
 import { toActivityDateKey } from '@/shared/lib/date'
 
+/** Matches Tailwind `md`. Below this, show fewer months so cells stay readable. */
+const MOBILE_VIEWPORT_MQ = '(max-width: 767px)'
+const MOBILE_MONTHS_BACK = 6
+
 interface ActivityDay {
 	date: string
 	githubCount: number
@@ -142,12 +146,41 @@ export function ActivityContributionGraph({
 		}
 	}, [selectedDay])
 
+	const graphRef = useRef<HTMLDivElement>(null)
+
+	const [isTouchDevice, setIsTouchDevice] = useState(false)
+	const [isMobileViewport, setIsMobileViewport] = useState(false)
+
+	useEffect(() => {
+		if (typeof window === 'undefined') return
+
+		const touchMedia = window.matchMedia('(pointer: coarse)')
+		const viewportMedia = window.matchMedia(MOBILE_VIEWPORT_MQ)
+
+		const syncTouch = () => setIsTouchDevice(touchMedia.matches)
+		const syncViewport = () => setIsMobileViewport(viewportMedia.matches)
+
+		syncTouch()
+		syncViewport()
+		touchMedia.addEventListener('change', syncTouch)
+		viewportMedia.addEventListener('change', syncViewport)
+
+		return () => {
+			touchMedia.removeEventListener('change', syncTouch)
+			viewportMedia.removeEventListener('change', syncViewport)
+		}
+	}, [])
+
 	const startDate = useMemo(() => {
 		const d = new Date()
-		d.setFullYear(d.getFullYear() - 1)
+		if (isMobileViewport) {
+			d.setMonth(d.getMonth() - MOBILE_MONTHS_BACK)
+		} else {
+			d.setFullYear(d.getFullYear() - 1)
+		}
 		d.setHours(0, 0, 0, 0)
 		return d
-	}, [])
+	}, [isMobileViewport])
 
 	const rangeLabel = useMemo(() => {
 		const format = (d: Date) =>
@@ -190,15 +223,6 @@ export function ActivityContributionGraph({
 			events
 		}))
 	}, [combinedData?.recentActivity])
-
-	const graphRef = useRef<HTMLDivElement>(null)
-
-	const [isTouchDevice, setIsTouchDevice] = useState(false)
-	useEffect(() => {
-		if (typeof window !== 'undefined') {
-			setIsTouchDevice(window.matchMedia('(pointer: coarse)').matches)
-		}
-	}, [])
 
 	const activityData = useMemo(() => {
 		const now = new Date()
@@ -460,35 +484,48 @@ export function ActivityContributionGraph({
 					<div
 						className="grid w-full mb-1 relative h-[15px] gap-[3px]"
 						style={{
-							gridTemplateColumns: `repeat(${totalWeeks}, 1fr)`
+							gridTemplateColumns: `1fr repeat(${totalWeeks}, 1fr) 1fr`
 						}}
 					>
+						<div aria-hidden className="pointer-events-none" />
 						{weeks.map((_, weekIndex) => {
 							const label = monthLabels.find(
 								l => l.weekIndex === weekIndex
 							)
+							const isLastMonthLabel =
+								label != null &&
+								monthLabels[monthLabels.length - 1]
+									?.weekIndex === weekIndex
 							return (
 								<div
 									key={weekIndex}
 									className="relative overflow-visible z-20"
 								>
 									{label && (
-										<span className="whitespace-nowrap absolute text-[10px] text-muted-foreground">
+										<span
+											className={`whitespace-nowrap absolute text-[10px] text-muted-foreground ${
+												isLastMonthLabel
+													? 'right-0'
+													: 'left-0'
+											}`}
+										>
 											{label.month}
 										</span>
 									)}
 								</div>
 							)
 						})}
+						<div aria-hidden className="pointer-events-none" />
 					</div>
 
 					{}
 					<div
 						className="grid w-full gap-[3px]"
 						style={{
-							gridTemplateColumns: `repeat(${totalWeeks}, 1fr)`
+							gridTemplateColumns: `1fr repeat(${totalWeeks}, 1fr) 1fr`
 						}}
 					>
+						<div aria-hidden className="pointer-events-none" />
 						{weeks.map((week, weekIndex) => (
 							<div
 								key={weekIndex}
@@ -543,6 +580,7 @@ export function ActivityContributionGraph({
 								})}
 							</div>
 						))}
+						<div aria-hidden className="pointer-events-none" />
 					</div>
 				</div>
 			</div>

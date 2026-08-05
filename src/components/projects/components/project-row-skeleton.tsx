@@ -4,7 +4,7 @@ import { memo } from 'react'
 
 export const ProjectRowSkeleton = memo(function ProjectRowSkeleton() {
 	return (
-		<div className="flex items-center justify-between bg-card px-2 sm:px-3 py-2 border-b border-border animate-pulse">
+		<div className="flex items-center justify-between bg-card px-4 sm:px-5 py-2 border-b border-border animate-pulse">
 			<div className="flex items-center gap-2 min-w-0">
 				<div className="h-3 w-20 bg-muted rounded" />
 				<div className="hidden md:block h-3 w-40 bg-muted/60 rounded" />
