@@ -1,6 +1,6 @@
 "use client";
 
-import { getDateParts, readMinutes } from "@/features/blog/lib/format";
+import { getDateParts, getPostLabels, readMinutes } from "@/features/blog/lib/format";
 import { useBlogFilter } from "@/hooks/use-blog-filter";
 import { ArrowUpRight, EyeOff } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -41,10 +41,7 @@ function BlogCard({ post }: Props) {
     const dateParts = getDateParts(post.metadata.publishedAt);
     const readTimeMinutes = readMinutes(post.metadata.readTime || "");
 
-    const allTags = [
-        ...(post.metadata.topic ? [post.metadata.topic] : []),
-        ...(post.metadata.tags || []),
-    ].filter((tag, index, arr) => arr.indexOf(tag) === index);
+    const allTags = getPostLabels(post);
 
     return (
         <Link

@@ -18,7 +18,7 @@ describe('rss route', () => {
 	it('escapes xml content and returns the rss content type', async () => {
 		blogMocks.getVisibleBlogPosts.mockResolvedValue([
 			{
-				slug: 'engineering/escape-test',
+				slug: 'escape-test',
 				metadata: {
 					title: 'Hello & Goodbye',
 					summary: '2 < 3 and "quotes" too',
@@ -41,7 +41,7 @@ describe('rss route', () => {
 			'<description>2 &lt; 3 and &quot;quotes&quot; too</description>'
 		)
 		expect(body).toContain(
-			'<link>https://example.com/blog/engineering/escape-test</link>'
+			'<link>https://example.com/blog/escape-test</link>'
 		)
 		expect(body).not.toContain('<title>Hello & Goodbye</title>')
 	})

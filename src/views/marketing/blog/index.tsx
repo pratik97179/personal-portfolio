@@ -2,10 +2,7 @@ import { Suspense } from 'react'
 import { BlogArchive } from '@/components/blog/blog-archive'
 import { BreadcrumbStructuredData } from '@/components/seo/structured-data'
 import { Section } from '@/components/ui/section'
-import {
-	getVisibleBlogPosts,
-	getVisibleTopics
-} from '@/features/blog'
+import { getVisibleBlogPosts } from '@/features/blog'
 
 function ArchiveSkeleton() {
 	return (
@@ -41,12 +38,8 @@ function ArchiveSkeleton() {
 }
 
 async function BlogArchiveAsync() {
-	const [posts, topics] = await Promise.all([
-		getVisibleBlogPosts(false),
-		getVisibleTopics(false)
-	])
-
-	return <BlogArchive posts={posts} topics={topics} />
+	const posts = await getVisibleBlogPosts(false)
+	return <BlogArchive posts={posts} />
 }
 
 export function BlogView() {
@@ -73,9 +66,8 @@ export function BlogView() {
 							overcooked opinion written down so it stays useful.
 						</p>
 						<p className="text-xs leading-relaxed text-muted-foreground/65">
-							Logbook layout by year. Filter by topic, or open the
-							full topic index when you want a narrower rabbit
-							hole.
+							Logbook layout by year. Filter by tag, or open the
+							topic index when you want a broader cut.
 						</p>
 					</div>
 				</Section>

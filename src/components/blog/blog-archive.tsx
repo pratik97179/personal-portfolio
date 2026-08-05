@@ -5,9 +5,13 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { getDateParts, readMinutes } from '@/features/blog/lib/format'
-import { slugifyTopic } from '@/features/blog/lib/topic-slug'
-import type { BlogTopicSummary } from '@/features/blog/lib/types'
+import {
+	collectPostLabels,
+	getDateParts,
+	getPostLabels,
+	postHasLabel,
+	readMinutes
+} from '@/features/blog/lib/format'
 
 type BlogPost = {
 	metadata: {
@@ -24,7 +28,6 @@ type BlogPost = {
 
 type Props = {
 	posts: BlogPost[]
-	topics: BlogTopicSummary[]
 }
 
 function groupByYear(posts: BlogPost[]) {
@@ -38,17 +41,15 @@ function groupByYear(posts: BlogPost[]) {
 	return Array.from(groups.entries())
 }
 
-export function BlogArchive({ posts, topics }: Props) {
-	const [activeTopic, setActiveTopic] = useState<string | 'all'>('all')
+export function BlogArchive({ posts }: Props) {
+	const [activeLabel, setActiveLabel] = useState<string | 'all'>('all')
+
+	const labels = useMemo(() => collectPostLabels(posts), [posts])
 
 	const filtered = useMemo(() => {
-		if (activeTopic === 'all') return posts
-		return posts.filter(
-			post =>
-				post.metadata.topic &&
-				slugifyTopic(post.metadata.topic) === activeTopic
-		)
-	}, [posts, activeTopic])
+		if (activeLabel === 'all') return posts
+		return posts.filter(post => postHasLabel(post, activeLabel))
+	}, [posts, activeLabel])
 
 	const yearGroups = useMemo(() => groupByYear(filtered), [filtered])
 
@@ -59,7 +60,7 @@ export function BlogArchive({ posts, topics }: Props) {
 					<p className="text-[10px] font-mono tracking-tight text-muted-foreground/70">
 						{filtered.length} note
 						{filtered.length === 1 ? '' : 's'}
-						{activeTopic !== 'all' && (
+						{activeLabel !== 'all' && (
 							<>
 								<span className="mx-1.5 text-muted-foreground/30">
 									·
@@ -72,28 +73,28 @@ export function BlogArchive({ posts, topics }: Props) {
 						href="/blog/topics"
 						className="text-[10px] font-mono tracking-tight text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 					>
-						all topics →
+						topics →
 					</Link>
 				</div>
 
 				<div
 					className="flex flex-wrap gap-1.5"
 					role="tablist"
-					aria-label="Filter by topic"
+					aria-label="Filter by tag"
 				>
 					<button
 						type="button"
 						role="tab"
-						aria-selected={activeTopic === 'all'}
-						onClick={() => setActiveTopic('all')}
+						aria-selected={activeLabel === 'all'}
+						onClick={() => setActiveLabel('all')}
 						className={cn(
 							'border px-2.5 py-1 text-[10px] font-mono uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
-							activeTopic === 'all'
+							activeLabel === 'all'
 								? 'border-foreground/25 bg-foreground/5 text-foreground'
 								: 'border-border/50 text-muted-foreground/70 hover:text-foreground'
 						)}
 						style={
-							activeTopic === 'all'
+							activeLabel === 'all'
 								? {
 										backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 2px, hsl(var(--foreground) / 0.05) 2px, hsl(var(--foreground) / 0.05) 3px)`
 									}
@@ -102,30 +103,35 @@ export function BlogArchive({ posts, topics }: Props) {
 					>
 						all
 					</button>
-					{topics.map(topic => (
+					{labels.map(label => (
 						<button
-							key={topic.slug}
+							key={label.name.toLowerCase()}
 							type="button"
 							role="tab"
-							aria-selected={activeTopic === topic.slug}
-							onClick={() => setActiveTopic(topic.slug)}
+							aria-selected={
+								activeLabel.toLowerCase() ===
+								label.name.toLowerCase()
+							}
+							onClick={() => setActiveLabel(label.name)}
 							className={cn(
 								'border px-2.5 py-1 text-[10px] font-mono uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
-								activeTopic === topic.slug
+								activeLabel.toLowerCase() ===
+									label.name.toLowerCase()
 									? 'border-foreground/25 bg-foreground/5 text-foreground'
 									: 'border-border/50 text-muted-foreground/70 hover:text-foreground'
 							)}
 							style={
-								activeTopic === topic.slug
+								activeLabel.toLowerCase() ===
+								label.name.toLowerCase()
 									? {
 											backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 2px, hsl(var(--foreground) / 0.05) 2px, hsl(var(--foreground) / 0.05) 3px)`
 										}
 									: undefined
 							}
 						>
-							{topic.name}
+							{label.name}
 							<span className="ml-1 text-muted-foreground/50">
-								{topic.count}
+								{label.count}
 							</span>
 						</button>
 					))}
@@ -158,6 +164,10 @@ export function BlogArchive({ posts, topics }: Props) {
 								)
 								const minutes = readMinutes(
 									post.metadata.readTime || ''
+								)
+								const postLabels = getPostLabels(post).slice(
+									0,
+									3
 								)
 								const delay =
 									(groupIndex * yearPosts.length + index) * 45
@@ -200,20 +210,21 @@ export function BlogArchive({ posts, topics }: Props) {
 															{minutes} min
 														</span>
 													)}
-													{post.metadata.topic && (
-														<>
+													{minutes > 0 &&
+														postLabels.length >
+															0 && (
 															<span className="text-muted-foreground/25">
 																·
 															</span>
-															<span>
-																{
-																	post
-																		.metadata
-																		.topic
-																}
-															</span>
-														</>
-													)}
+														)}
+													{postLabels.map(label => (
+														<span
+															key={label}
+															className="border border-border/50 bg-secondary/40 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-foreground/80"
+														>
+															{label}
+														</span>
+													))}
 												</div>
 											</div>
 
@@ -228,7 +239,7 @@ export function BlogArchive({ posts, topics }: Props) {
 
 				{filtered.length === 0 && (
 					<p className="px-4 py-10 text-center text-sm text-muted-foreground md:px-5">
-						No notes in this topic yet.
+						No notes with this tag yet.
 					</p>
 				)}
 			</div>

@@ -76,3 +76,49 @@ export function readMinutes(value: string | number): number {
 
 	return 0
 }
+
+/** Topic + tags, deduped case-insensitively (display order preserved). */
+export function getPostLabels(post: {
+	metadata: { topic?: string; tags?: string[] }
+}): string[] {
+	const labels = [
+		...(post.metadata.topic ? [post.metadata.topic] : []),
+		...(post.metadata.tags || [])
+	]
+
+	return labels.filter(
+		(label, index, arr) =>
+			arr.findIndex(item => item.toLowerCase() === label.toLowerCase()) ===
+			index
+	)
+}
+
+export function postHasLabel(
+	post: { metadata: { topic?: string; tags?: string[] } },
+	label: string
+) {
+	const needle = label.toLowerCase()
+	return getPostLabels(post).some(item => item.toLowerCase() === needle)
+}
+
+export function collectPostLabels(
+	posts: Array<{ metadata: { topic?: string; tags?: string[] } }>
+) {
+	const counts = new Map<string, { name: string; count: number }>()
+
+	for (const post of posts) {
+		for (const label of getPostLabels(post)) {
+			const key = label.toLowerCase()
+			const existing = counts.get(key)
+			if (existing) {
+				existing.count += 1
+			} else {
+				counts.set(key, { name: label, count: 1 })
+			}
+		}
+	}
+
+	return Array.from(counts.values()).sort(
+		(a, b) => b.count - a.count || a.name.localeCompare(b.name)
+	)
+}

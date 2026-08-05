@@ -87,7 +87,9 @@ function getBlogPostData(dir: string): Array<BlogPost | null> {
 			const isInDraftDirectory = file
 				.split(path.sep)
 				.some(segment => segment.toLowerCase() === 'drafts')
-			const slug = metadata.slug || file.replace(/\.(mdx|md)$/, '')
+			const slug =
+				metadata.slug ||
+				path.basename(file).replace(/\.(mdx|md)$/, '')
 
 			return {
 				slug,

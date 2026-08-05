@@ -62,6 +62,27 @@ const nextConfig: NextConfig = {
                 destination: "/blog/topics/:slug*",
                 permanent: true,
             },
+            // Flat post URLs: folder was only for organization, not routing
+            {
+                source: "/blog/engineering/:slug",
+                destination: "/blog/:slug",
+                permanent: true,
+            },
+            {
+                source: "/blog/guides/:slug",
+                destination: "/blog/:slug",
+                permanent: true,
+            },
+            {
+                source: "/blog/personal/:slug",
+                destination: "/blog/:slug",
+                permanent: true,
+            },
+            {
+                source: "/blog/yappin/:slug",
+                destination: "/blog/:slug",
+                permanent: true,
+            },
         ];
     },
     compress: true,
