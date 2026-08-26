@@ -21,12 +21,12 @@ import {
     SiTypescript,
 } from "react-icons/si";
 
+type TechIcon = React.ComponentType<{ className?: string }>;
+
 type TechItem = {
     name: string;
-    label: string;
-    Icon:
-        | React.ComponentType<{ className?: string }>
-        | React.ComponentType<{ className?: string }>[];
+    label: string | readonly string[];
+    Icon: TechIcon | readonly TechIcon[];
 };
 
 const LOGOS: TechItem[] = [
@@ -34,20 +34,20 @@ const LOGOS: TechItem[] = [
     { name: "react", label: "React", Icon: SiReact },
     { name: "next", label: "Next.js", Icon: SiNextdotjs },
     { name: "typescript", label: "TypeScript", Icon: SiTypescript },
-    { name: "native", label: "Kotlin / Swift", Icon: [SiKotlin, SiSwift] },
+    { name: "native", label: ["Kotlin", "Swift"], Icon: [SiKotlin, SiSwift] },
     {
         name: "architecture",
-        label: "System Design / Architecture",
+        label: ["System Design", "Architecture"],
         Icon: [Network, Layers],
     },
     {
         name: "realtime",
-        label: "WebSockets / Offline-first",
+        label: ["WebSockets", "Offline-first"],
         Icon: [SiReact, SiFlutter],
     },
     {
         name: "tools",
-        label: "Docker / CI/CD",
+        label: ["Docker", "CI/CD"],
         Icon: [SiDocker, SiGithubactions],
     },
 ];
@@ -157,6 +157,7 @@ type TechCardProps = React.ComponentProps<"div"> & {
 
 function TechCard({ logo, className, children, ...props }: TechCardProps) {
     const Icons = Array.isArray(logo.Icon) ? logo.Icon : [logo.Icon];
+    const labels = Array.isArray(logo.label) ? logo.label : [logo.label];
     const containerRef = useRef<HTMLDivElement>(null);
     const [index, setIndex] = useState(0);
 
@@ -198,6 +199,7 @@ function TechCard({ logo, className, children, ...props }: TechCardProps) {
     });
 
     const ActiveIcon = Icons[index];
+    const activeLabel = labels[index % labels.length];
 
     return (
         <div
@@ -209,37 +211,35 @@ function TechCard({ logo, className, children, ...props }: TechCardProps) {
             style={{ perspective: "1000px" }}
             {...props}
         >
-            <div className="relative flex w-full flex-col items-center justify-end gap-2 h-16">
-                <div className="relative mb-1 flex h-10 w-10 shrink-0 items-center justify-center">
-                    <motion.div
-                        style={{
-                            rotateX: rotationX,
-                            transformStyle: "preserve-3d",
-                        }}
-                        className="flex h-full w-full items-center justify-center"
-                    >
-                        <div
-                            className="flex h-full w-full items-center justify-center"
-                            style={{
-                                backfaceVisibility: "hidden",
-                                transform:
-                                    index % 2 === 1
-                                        ? "rotateX(180deg)"
-                                        : "none",
-                            }}
-                        >
-                            <ActiveIcon
-                                className="block h-8 w-8 shrink-0 text-foreground/60 transition-colors duration-200 group-hover:text-foreground md:h-10 md:w-10"
-                                aria-hidden="true"
-                            />
-                        </div>
-                    </motion.div>
-                </div>
+            <motion.div
+                style={{
+                    rotateX: rotationX,
+                    transformStyle: "preserve-3d",
+                }}
+                className="relative flex h-16 w-full flex-col items-center justify-end gap-2"
+                aria-live={labels.length > 1 ? "polite" : undefined}
+            >
+                <div
+                    className="flex h-full w-full flex-col items-center justify-end gap-2"
+                    style={{
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                        transform:
+                            index % 2 === 1 ? "rotateX(180deg)" : "none",
+                    }}
+                >
+                    <div className="relative mb-1 flex h-10 w-10 shrink-0 items-center justify-center">
+                        <ActiveIcon
+                            className="block h-8 w-8 shrink-0 text-foreground/60 transition-colors duration-200 group-hover:text-foreground md:h-10 md:w-10"
+                            aria-hidden="true"
+                        />
+                    </div>
 
-                <div className="h-4 w-full px-1 text-center text-[10px] font-medium leading-4 text-muted-foreground">
-                    <span className="block truncate">{logo.label}</span>
+                    <div className="h-4 w-full px-1 text-center text-xs font-medium leading-4 text-muted-foreground">
+                        <span className="block truncate">{activeLabel}</span>
+                    </div>
                 </div>
-            </div>
+            </motion.div>
 
             {children}
         </div>
