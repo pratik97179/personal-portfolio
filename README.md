@@ -7,7 +7,7 @@ Personal site for [Pratik Nath Tiwari](https://github.com/pratik97179), software
 - Homepage with intro, tech stack, work experience, open-source projects, GitHub activity, and recent blog posts
 - About page and resume download
 - Filesystem MDX blog (topics, reading time, RSS, drafts)
-- Project showcase driven by static GitHub repos (AirCursor, ws_client, dependency_inj), with optional commit metadata from the GitHub API
+- Project showcase driven by static GitHub repos (AirCursor, BlastRadius, Mac Observer, Packetworld, Airjam, ws_client, Runtime), with optional commit metadata from the GitHub API
 - Contact popover backed by server actions and Postgres
 - Optional Spotify / YouTube Music activity feeds when credentials are configured
 - Privacy and terms pages

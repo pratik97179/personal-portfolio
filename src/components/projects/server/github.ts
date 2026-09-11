@@ -172,7 +172,7 @@ export async function fetchGitMetrics(
 }
 
 export async function enrichProjectsWithGitData<
-	T extends { github: string; git?: IGitMetrics }
+	T extends { github?: string; git?: IGitMetrics }
 >(projects: T[]): Promise<T[]> {
 	if (isProductionBuildPhase()) {
 		return projects
@@ -198,6 +198,11 @@ export async function enrichProjectsWithGitData<
 
 			try {
 				if (project.git) {
+					enriched[currentIndex] = project
+					continue
+				}
+
+				if (!project.github) {
 					enriched[currentIndex] = project
 					continue
 				}

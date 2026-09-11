@@ -1,4 +1,4 @@
-export type TProject = 'desktop' | 'cli' | 'ui' | 'saas' | 'utility'
+export type TProject = 'desktop' | 'cli' | 'ui' | 'saas' | 'utility' | 'game'
 
 export type TStatus = 'done' | 'beta' | 'wip' | 'active'
 
@@ -47,7 +47,7 @@ export interface IProject {
 	additionalDescription?: string
 	type: TProject
 	status: TStatus
-	github: string
+	github?: string
 	tech: string[]
 	preview: TPreview
 	spotlight?: boolean

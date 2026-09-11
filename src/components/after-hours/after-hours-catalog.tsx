@@ -18,7 +18,8 @@ const TYPE_LABEL: Record<TProject, string> = {
 	cli: 'cli',
 	ui: 'ui',
 	saas: 'saas',
-	utility: 'utility'
+	utility: 'utility',
+	game: 'game'
 }
 
 function statusClass(status: TStatus) {

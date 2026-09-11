@@ -11,7 +11,7 @@ function CatalogSkeleton() {
 				<div className="h-3 w-40 animate-pulse rounded-sm bg-muted/30" />
 				<div className="h-3 w-32 animate-pulse rounded-sm bg-muted/20" />
 			</div>
-			{Array.from({ length: 3 }).map((_, index) => (
+			{Array.from({ length: 7 }).map((_, index) => (
 				<div
 					key={index}
 					className="space-y-3 border-b border-border/60 px-4 py-6 md:px-5"

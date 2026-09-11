@@ -12,7 +12,9 @@ export const afterHoursMetadata = createPageMetadata({
 		'GitHub',
 		'Flutter',
 		'Python',
-		'TypeScript'
+		'TypeScript',
+		'Swift',
+		'Dart'
 	],
 	canonical: '/after-hours'
 })
