@@ -48,10 +48,14 @@ export function HomeView() {
                     className="!mb-0 border-b-0"
                 >
                     <div className="pt-4 space-y-4">
-                        <p className="text-sm text-muted-foreground/80 leading-relaxed font-mono tracking-tight px-4 md:px-5">
-                            Platform-agnostic stack: Flutter, React, and Next.js
-                            for mobile and web, with WebSockets, offline-first
-                            sync, and performance work at scale.
+                        <p className="text-sm text-muted-foreground/80 leading-relaxed font-mono tracking-tight px-4 md:px-5 text-pretty">
+                            <strong className="text-foreground font-semibold">
+                                Platform-agnostic by design:
+                            </strong>{" "}
+                            Building across <em className="text-foreground">platforms</em>,{" "}
+                            <em className="text-foreground">languages</em>, and <em className="text-foreground">ecosystems</em>, with
+                            experience transferring solutions and patterns
+                            between them.
                         </p>
                         <TechStackCloud />
                     </div>

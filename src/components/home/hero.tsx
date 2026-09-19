@@ -28,12 +28,17 @@ export function Intro() {
             </div>
 
             <div className="max-w-none">
-                <p className="text-sm text-muted-foreground/80 leading-relaxed font-mono tracking-tight">
-                    Software engineer building products for{" "}
-                    <em>mobile and the web</em>.{" "}
-                    <strong>{profile.yearsExperience} years</strong> shipping
-                    trading platforms, fintech apps, and consumer products used
-                    by millions.
+                <p className="text-sm text-muted-foreground/80 leading-relaxed font-mono tracking-tight text-pretty">
+                    Software engineer with{" "}
+                    <strong className="text-foreground font-semibold">
+                        {profile.yearsExperience} years
+                    </strong>{" "}
+                    of experience developing{" "}
+                    <em className="text-foreground">complex scalable systems</em>
+                    . I build with the product&apos;s{" "}
+                    <em className="text-foreground">current needs</em> in mind
+                    without limiting where it can go{" "}
+                    <em className="text-foreground">next</em>.
                 </p>
             </div>
         </header>

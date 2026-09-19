@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
+import { CompanyStoreLinks } from '@/components/experience/company-store-links'
 
 const iconMap = {
 	code: CodeXmlIcon,
@@ -39,13 +40,17 @@ export type ExperiencePositionItemType = {
 }
 
 export type ExperienceItemType = {
-		id: string
-		companyName: string
-		companyDescription?: string
-		companyMeta?: string
-		companyLogo?: string
-		positions: ExperiencePositionItemType[]
-		isCurrentEmployer?: boolean
+	id: string
+	companyName: string
+	companyDescription?: string
+	companyMeta?: string
+	companyLogo?: string
+	storeLinks?: {
+		apple?: string
+		android?: string
+	}
+	positions: ExperiencePositionItemType[]
+	isCurrentEmployer?: boolean
 }
 
 export function WorkExperience({
@@ -235,17 +240,18 @@ export function ExperienceItem({
 				<div className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition-colors group-hover:border-foreground/20 group-hover:text-foreground">
 					<span className="text-sm font-semibold">{initial}</span>
 					{experience.isCurrentEmployer && (
-						<span className="absolute -right-1 -top-1 size-2.5 rounded-full border-2 border-background bg-teal-500 ring-2 ring-background" />
+						<span className="absolute -right-1 -top-1 size-2.5 rounded-full border-2 border-background bg-brand-500 ring-2 ring-background" />
 					)}
 				</div>
 
 				<div className="flex min-w-0 flex-col">
-					<div className="flex items-center gap-3">
-						<h3 className="font-semibold text-foreground tracking-tight text-base">
+					<div className="flex flex-wrap items-center gap-2 sm:gap-3">
+						<h3 className="font-semibold tracking-tight text-base text-brand-500">
 							{experience.companyName}
 						</h3>
+						<CompanyStoreLinks links={experience.storeLinks} />
 						{experience.isCurrentEmployer && (
-							<span className="inline-flex items-center border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wide font-medium text-teal-600 dark:text-teal-400 shadow-sm">
+							<span className="inline-flex items-center border border-brand-500/30 bg-brand-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wide font-medium text-brand-500 shadow-sm">
 								Current
 							</span>
 						)}
@@ -340,7 +346,7 @@ export function ExperiencePositionItem({
 						<div>
 							<h4
 								className={cn(
-									'text-sm font-semibold text-foreground transition-colors group-hover/header:text-teal-600 dark:group-hover/header:text-teal-400'
+									'text-sm font-semibold text-foreground transition-colors group-hover/header:text-brand-500'
 								)}
 							>
 								{position.title}
@@ -379,7 +385,20 @@ export function ExperiencePositionItem({
 						>
 							{position.description && (
 								<Prose>
-									<ReactMarkdown>
+									<ReactMarkdown
+										components={{
+											strong: ({ children }) => (
+												<strong className="text-foreground font-semibold">
+													{children}
+												</strong>
+											),
+											em: ({ children }) => (
+												<em className="text-foreground">
+													{children}
+												</em>
+											)
+										}}
+									>
 										{position.description}
 									</ReactMarkdown>
 								</Prose>

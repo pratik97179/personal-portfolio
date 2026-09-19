@@ -7,6 +7,7 @@ import type {
 	ExperienceItemType,
 	ExperiencePositionItemType
 } from '@/components/ui/work-experience'
+import { CompanyStoreLinks } from '@/components/experience/company-store-links'
 
 type Props = {
 	experiences: ExperienceItemType[]
@@ -53,7 +54,20 @@ function PositionBlock({ position }: { position: ExperiencePositionItemType }) {
 						"prose-li:relative prose-li:pl-4 prose-li:my-0 prose-li:leading-6 prose-li:before:absolute prose-li:before:left-0 prose-li:before:top-[9px] prose-li:before:text-[9px] prose-li:before:leading-none prose-li:before:font-mono prose-li:before:text-muted-foreground/40 prose-li:before:content-['+']"
 					)}
 				>
-					<ReactMarkdown>{position.description}</ReactMarkdown>
+					<ReactMarkdown
+						components={{
+							strong: ({ children }) => (
+								<strong className="text-foreground font-semibold">
+									{children}
+								</strong>
+							),
+							em: ({ children }) => (
+								<em className="text-foreground">{children}</em>
+							)
+						}}
+					>
+						{position.description}
+					</ReactMarkdown>
 				</div>
 			)}
 
@@ -111,9 +125,10 @@ function CompanyDossier({
 				<div className="min-w-0 space-y-4 pb-1">
 					<header className="space-y-1.5">
 						<div className="flex flex-wrap items-center gap-2">
-							<h2 className="text-base font-semibold tracking-tight text-foreground">
+							<h2 className="text-base font-semibold tracking-tight text-brand-500">
 								{experience.companyName}
 							</h2>
+							<CompanyStoreLinks links={experience.storeLinks} />
 							{experience.isCurrentEmployer && (
 								<span className="inline-flex items-center border border-brand-500/30 bg-brand-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-500">
 									Current
