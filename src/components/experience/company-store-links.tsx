@@ -29,7 +29,7 @@ function StoreBadge({
 			title={label}
 			onClick={event => event.stopPropagation()}
 			className={cn(
-				'inline-flex size-7 shrink-0 items-center justify-center rounded-md border border-border/80 bg-card text-muted-foreground',
+				'inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-card text-muted-foreground',
 				'transition-[background-color,border-color,color,transform] duration-300',
 				'hover:border-brand-500 hover:bg-brand-500 hover:text-background',
 				'active:scale-95',
@@ -49,12 +49,12 @@ export function CompanyStoreLinks({ links }: { links?: StoreLinks }) {
 		<span className="ml-2 inline-flex items-center gap-1.5">
 			{links.apple ? (
 				<StoreBadge href={links.apple} label="Open on the App Store">
-					<SiApple className="size-3.5" aria-hidden />
+					<SiApple className="size-4" aria-hidden />
 				</StoreBadge>
 			) : null}
 			{links.android ? (
 				<StoreBadge href={links.android} label="Open on Google Play">
-					<SiAndroid className="size-3.5" aria-hidden />
+					<SiAndroid className="size-4" aria-hidden />
 				</StoreBadge>
 			) : null}
 		</span>
