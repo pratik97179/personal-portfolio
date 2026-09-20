@@ -34,7 +34,7 @@ function BlogPostLink({ post }: { post: BlogPost }) {
 				<div className="flex min-w-0 flex-col gap-2">
 					<div className="flex min-w-0 items-start gap-2">
 						<div className="min-w-0 flex-1">
-							<span className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary sm:text-[15px]">
+							<span className="block text-pretty break-words text-sm font-medium text-foreground transition-colors group-hover:text-primary sm:text-[15px]">
 								{post.metadata.title}
 							</span>
 							{post.metadata.summary && (
